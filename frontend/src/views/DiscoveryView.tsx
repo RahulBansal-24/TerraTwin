@@ -22,6 +22,7 @@ export const DiscoveryView: React.FC<DiscoveryViewProps> = ({
   onBackToExplorer,
 }) => {
   const [filterType, setFilterType] = useState<string>('all');
+  const [continentFilter, setContinentFilter] = useState<string>('all');
 
   if (!analysisResult) {
     return (
@@ -42,60 +43,101 @@ export const DiscoveryView: React.FC<DiscoveryViewProps> = ({
   }
 
   const filteredCandidates = analysisResult.candidates.filter((cand) => {
-    if (filterType === 'all') return true;
-    return cand.features.geology.lithology_category.toLowerCase().includes(filterType.toLowerCase());
+    const matchesLithology = filterType === 'all' || cand.features.geology.lithology_category.toLowerCase().includes(filterType.toLowerCase());
+    const matchesContinent = continentFilter === 'all' || (cand.country && cand.country.toLowerCase().includes(continentFilter.toLowerCase())) || (cand.name && cand.name.toLowerCase().includes(continentFilter.toLowerCase()));
+    return matchesLithology && matchesContinent;
   });
 
-  const activeCand = selectedCandidate || analysisResult.candidates[0];
+  const activeCand = selectedCandidate || filteredCandidates[0] || analysisResult.candidates[0];
 
   return (
     <div className="space-y-6">
       {/* Telemetry Status Banner */}
-      <div className="glass-panel p-5 rounded-2xl border border-sky-900/30 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <button
-              onClick={onBackToExplorer}
-              className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 transition mr-1"
-              title="Back to Explorer"
-            >
-              <ArrowLeft size={16} />
-            </button>
-            <span className="text-xs px-2 py-0.5 rounded bg-sky-950 border border-sky-800 text-sky-300 font-mono">
-              ANALYSIS COMPLETE
-            </span>
-            <span className="text-xs text-slate-400">
-              Evaluated {analysisResult.total_candidates_searched} candidate environments in {analysisResult.computation_time_ms} ms
-            </span>
+      <div className="glass-panel p-5 rounded-2xl border border-sky-900/30 flex flex-col gap-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div>
+            <div className="flex flex-wrap items-center gap-2 mb-1">
+              <button
+                onClick={onBackToExplorer}
+                className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 transition mr-1"
+                title="Back to Explorer"
+              >
+                <ArrowLeft size={16} />
+              </button>
+              <span className="text-xs px-2 py-0.5 rounded bg-sky-950 border border-sky-800 text-sky-300 font-mono">
+                ANALYSIS COMPLETE
+              </span>
+              <span className="text-xs px-2 py-0.5 rounded bg-indigo-950 border border-indigo-800 text-indigo-300 font-mono">
+                {analysisResult.database_mode === 'benchmark_catalog' ? 'BENCHMARK SITES' : 'GLOBAL R*TREE DATABASE'}
+              </span>
+              {analysisResult.diversity_balanced && (
+                <span className="text-xs px-2 py-0.5 rounded bg-emerald-950/80 border border-emerald-800 text-emerald-300 font-mono">
+                  DIVERSITY BALANCED
+                </span>
+              )}
+              <span className="text-xs text-slate-400">
+                Evaluated {analysisResult.total_candidates_searched} candidates in {analysisResult.computation_time_ms} ms
+              </span>
+            </div>
+            <h1 className="text-lg font-bold text-white tracking-wide">
+              Earth Analogs for {analysisResult.reference_name} ({analysisResult.reference_planet.toUpperCase()})
+            </h1>
+            <p className="text-xs text-slate-400 mt-0.5">{analysisResult.scientific_summary}</p>
+            {analysisResult.continents_represented && analysisResult.continents_represented.length > 0 && (
+              <div className="flex items-center gap-1.5 mt-2 text-[11px] text-slate-400">
+                <span className="text-slate-500">Continents represented:</span>
+                {analysisResult.continents_represented.map((c) => (
+                  <span key={c} className="px-1.5 py-0.5 rounded bg-slate-800/80 text-slate-300 font-mono text-[10px]">
+                    {c}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
-          <h1 className="text-lg font-bold text-white tracking-wide">
-            Earth Analogs for {analysisResult.reference_name} ({analysisResult.reference_planet.toUpperCase()})
-          </h1>
-          <p className="text-xs text-slate-400 mt-0.5">{analysisResult.scientific_summary}</p>
         </div>
 
         {/* Filter Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
-          <Filter size={14} className="text-slate-400 mr-1" />
-          {[
-            { id: 'all', label: 'All Environments' },
-            { id: 'volcanic', label: 'Volcanic Basalts' },
-            { id: 'evaporite', label: 'Playas / Salars' },
-            { id: 'permafrost', label: 'Polar Cryo' },
-            { id: 'breccia', label: 'Impact Structures' },
-          ].map((f) => (
-            <button
-              key={f.id}
-              onClick={() => setFilterType(f.id)}
-              className={`text-xs px-2.5 py-1 rounded-lg border transition whitespace-nowrap ${
-                filterType === f.id
-                  ? 'bg-sky-500/20 text-sky-300 border-sky-500/50 font-medium'
-                  : 'bg-slate-900/60 text-slate-400 border-slate-800 hover:text-slate-200'
-              }`}
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-800/80">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+            <Filter size={14} className="text-slate-400 mr-1" />
+            {[
+              { id: 'all', label: 'All Environments' },
+              { id: 'volcanic', label: 'Volcanic Basalts' },
+              { id: 'evaporite', label: 'Playas / Salars' },
+              { id: 'permafrost', label: 'Polar Cryo' },
+              { id: 'breccia', label: 'Impact Structures' },
+            ].map((f) => (
+              <button
+                key={f.id}
+                onClick={() => setFilterType(f.id)}
+                className={`text-xs px-2.5 py-1 rounded-lg border transition whitespace-nowrap ${
+                  filterType === f.id
+                    ? 'bg-sky-500/20 text-sky-300 border-sky-500/50 font-medium'
+                    : 'bg-slate-900/60 text-slate-400 border-slate-800 hover:text-slate-200'
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-slate-400">Continent:</span>
+            <select
+              value={continentFilter}
+              onChange={(e) => setContinentFilter(e.target.value)}
+              className="bg-[#050811] text-slate-200 text-xs px-2 py-1 rounded-lg border border-slate-800 focus:outline-none focus:border-sky-500"
             >
-              {f.label}
-            </button>
-          ))}
+              <option value="all">All Continents</option>
+              <option value="Africa">Africa</option>
+              <option value="Antarctica">Antarctica</option>
+              <option value="Asia">Asia</option>
+              <option value="Europe">Europe</option>
+              <option value="North America">North America</option>
+              <option value="South America">South America</option>
+              <option value="Oceania">Oceania</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -115,8 +157,15 @@ export const DiscoveryView: React.FC<DiscoveryViewProps> = ({
           ))}
 
           {filteredCandidates.length === 0 && (
-            <div className="glass-panel p-8 text-center text-xs text-slate-400">
-              No candidates in this geological category. Switch filters to view all candidates.
+            <div className="glass-panel p-8 text-center text-xs text-slate-400 space-y-2">
+              <p>No candidates match the selected environment or continent filters.</p>
+              <button
+                type="button"
+                onClick={() => { setFilterType('all'); setContinentFilter('all'); }}
+                className="px-3 py-1 bg-sky-950 border border-sky-800 text-sky-300 rounded text-xs hover:bg-sky-900 transition"
+              >
+                Reset Filters
+              </button>
             </div>
           )}
         </div>

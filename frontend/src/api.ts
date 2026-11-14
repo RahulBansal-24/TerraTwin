@@ -1,6 +1,7 @@
 import {
   PlanetInfo, ExplorationRegion, RegionFeatureVector,
-  AnalysisRequest, AnalysisResult, AnalogCandidate, ScientificInsight
+  AnalysisRequest, AnalysisResult, AnalogCandidate, ScientificInsight,
+  DatabaseStats, PlanetaryFeature
 } from './types';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
@@ -108,5 +109,25 @@ export function getReportDownloadUrl(reportId: string): string {
 export async function fetchDatasets(): Promise<any[]> {
   const res = await fetch(`${API_BASE}/datasets`);
   if (!res.ok) throw new Error('Failed to fetch datasets');
+  return res.json();
+}
+
+export async function fetchDatabaseStats(): Promise<DatabaseStats> {
+  const res = await fetch(`${API_BASE}/database/stats`);
+  if (!res.ok) throw new Error('Failed to fetch spatial database stats');
+  return res.json();
+}
+
+export async function fetchPlanetaryFeatures(
+  planet: string,
+  featureType?: string,
+  query?: string
+): Promise<PlanetaryFeature[]> {
+  const params = new URLSearchParams();
+  if (featureType) params.append('feature_type', featureType);
+  if (query) params.append('query', query);
+  const qs = params.toString() ? `?${params.toString()}` : '';
+  const res = await fetch(`${API_BASE}/planetary-features/${planet}${qs}`);
+  if (!res.ok) throw new Error(`Failed to fetch features for ${planet}`);
   return res.json();
 }

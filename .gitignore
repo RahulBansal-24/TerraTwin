@@ -30,6 +30,7 @@ htmlcov/
 backend/app/data/cache/*
 backend/app/data/reports/*.pdf
 !backend/app/data/reports/.gitkeep
+backend/app/data/*.db
 
 # Logs
 logs/

@@ -1,3 +1,33 @@
+export interface DatabaseStats {
+  status: string;
+  total_candidates: number;
+  coarse_cells: number;
+  fine_cells: number;
+  continents_count: number;
+  continents: string[];
+  lithologies_count: number;
+  lithologies: string[];
+  spatial_index: string;
+  coordinate_system: string;
+  resolution_coarse_km: number;
+  resolution_fine_km: number;
+  benchmark_catalog_count: number;
+}
+
+export interface PlanetaryFeature {
+  feature_id: string;
+  name: string;
+  planet: string;
+  feature_type: string;
+  latitude: number;
+  longitude: number;
+  diameter_km: number;
+  quadrangle?: string;
+  geological_context?: string;
+  approval_year?: number;
+  origin?: string;
+}
+
 export interface PhysicalProperties {
   radius_km: number;
   surface_gravity_ms2: number;
@@ -143,6 +173,12 @@ export interface AnalysisRequest {
   weights?: SimilarityWeights;
   min_confidence?: number;
   filter_environment?: string;
+  use_benchmark_catalog?: boolean;
+  diversity_balanced?: boolean;
+  continent_filter?: string;
+  country_filter?: string;
+  lithology_filter?: string;
+  limit?: number;
 }
 
 export interface AnalysisResult {
@@ -158,6 +194,9 @@ export interface AnalysisResult {
   total_candidates_searched: number;
   computation_time_ms: number;
   scientific_summary: string;
+  database_mode?: string;
+  diversity_balanced?: boolean;
+  continents_represented?: string[];
 }
 
 export interface ScientificInsight {

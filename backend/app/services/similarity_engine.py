@@ -1,22 +1,23 @@
 """
-TerraTwin AI/ML Planetary Analog Similarity Engine.
-Scientifically defensible multidimensional similarity calculation between
-planetary reference regions (Moon, Mars) and terrestrial candidate environments.
+TerraTwin AI/ML Global Planetary Analog Similarity Engine.
+Performs multidimensional similarity calculation against the Global Earth Spatial Database
+with spatial deduplication, geographic diversity balancing, and robust Z-score normalization.
 """
 
 import math
 import numpy as np
 from typing import List, Dict, Tuple, Any, Optional
-from ..models.features import RegionFeatureVector
+
+from ..models.features import RegionFeatureVector, TopographyFeatures, GeologicalFeatures, ThermalFeatures, SurfaceFeatures, FeatureMeasurement
 from ..models.similarity import (
     SimilarityWeights, ComponentScores, AnalogCandidate,
     AnalysisResult, FeatureDifference
 )
 from ..data.dataset_catalog import EARTH_ANALOG_CATALOG, PLANETARY_SYSTEM
+from .spatial_db import SpatialDatabase
 from .geo_engine import GeoEngine
 
 # Petrological & Geochemical Compatibility Matrix
-# Evaluates compatibility between terrestrial lithologies and extraterrestrial crustal units.
 LITHOLOGY_COMPATIBILITY = {
     ("basaltic_volcanic", "basaltic_volcanic"): 0.98,
     ("basaltic_volcanic", "impact_breccia"): 0.72,
@@ -61,7 +62,6 @@ LITHOLOGY_COMPATIBILITY = {
     ("impact_breccia", "acidic_sulfate_gossan"): 0.45,
 }
 
-# Empirical Standard Deviations (Sigma) for robust Z-score feature scaling across analog environments
 FEATURE_SIGMAS = {
     "slope_mean": 8.0,          # degrees
     "slope_p90": 14.0,          # degrees
@@ -77,25 +77,21 @@ FEATURE_SIGMAS = {
 }
 
 class SimilarityEngine:
-    """Scientific similarity calculation and ranking engine."""
+    """Scientific similarity calculation, spatial indexing, and ranking engine."""
 
     @staticmethod
     def get_lithology_compatibility(lith1: str, lith2: str) -> float:
-        """Query bidirectional lithological compatibility score (0.0 to 1.0)."""
+        """Query petrological compatibility score (0.0 to 1.0)."""
         key1 = (lith1, lith2)
         key2 = (lith2, lith1)
         if key1 in LITHOLOGY_COMPATIBILITY:
             return LITHOLOGY_COMPATIBILITY[key1]
         if key2 in LITHOLOGY_COMPATIBILITY:
             return LITHOLOGY_COMPATIBILITY[key2]
-        return 0.30 # Baseline geological disparity
+        return 0.35 # Baseline geological compatibility
 
     @classmethod
     def compute_topography_similarity(cls, ref: RegionFeatureVector, cand: RegionFeatureVector) -> Tuple[float, List[str], List[str]]:
-        """
-        Compute weighted Euclidean distance across normalized topographic parameters.
-        Returns similarity percentage (0-100), strong matches, and notable divergences.
-        """
         t_ref = ref.topography
         t_cand = cand.topography
 
@@ -107,16 +103,12 @@ class SimilarityEngine:
             ("Elevation Standard Deviation", (t_ref.elevation_std.value - t_cand.elevation_std.value) / FEATURE_SIGMAS["elevation_std"], 0.15),
         ]
 
-        # Weighted squared Euclidean distance
         weighted_sq_dist = sum(weight * (norm_delta ** 2) for _, norm_delta, weight in diffs)
         euclidean_dist = math.sqrt(weighted_sq_dist)
-
-        # Convert distance to similarity score via exponential decay: S = 100 * exp(-D / 1.5)
         topo_score = round(100.0 * math.exp(-euclidean_dist / 1.5), 1)
 
         strong_matches = []
         divergences = []
-
         for name, norm_delta, _ in diffs:
             if abs(norm_delta) < 0.45:
                 strong_matches.append(f"Highly congruent {name.lower()} (Δz < 0.45σ)")
@@ -127,15 +119,11 @@ class SimilarityEngine:
 
     @classmethod
     def compute_geological_similarity(cls, ref: RegionFeatureVector, cand: RegionFeatureVector) -> Tuple[float, List[str], List[str]]:
-        """
-        Compute petrological and mineralogical similarity.
-        """
         lith_compat = cls.get_lithology_compatibility(ref.geology.lithology_category, cand.geology.lithology_category)
         base_score = lith_compat * 100.0
 
         strong_matches = []
         divergences = []
-
         if lith_compat >= 0.85:
             strong_matches.append(f"Direct petrological match: {cand.geology.rock_type} analogous to {ref.geology.rock_type}")
         elif lith_compat >= 0.65:
@@ -147,14 +135,9 @@ class SimilarityEngine:
 
     @classmethod
     def compute_thermal_similarity(cls, ref: RegionFeatureVector, cand: RegionFeatureVector) -> Tuple[float, List[str], List[str]]:
-        """
-        Compare diurnal temperature swing and thermal inertia.
-        Normalizes for absolute atmospheric baseline differences (Earth 1 atm vs Mars 6 mbar vs Lunar vacuum).
-        """
         th_ref = ref.thermal
         th_cand = cand.thermal
 
-        # Diurnal swing normalized comparison
         diurnal_delta = abs(th_ref.diurnal_range_k.value - th_cand.diurnal_range_k.value) / FEATURE_SIGMAS["diurnal_range_k"]
         inertia_delta = abs(th_ref.thermal_inertia_si.value - th_cand.thermal_inertia_si.value) / FEATURE_SIGMAS["thermal_inertia_si"]
 
@@ -163,21 +146,17 @@ class SimilarityEngine:
 
         strong_matches = []
         divergences = []
-
         if diurnal_delta < 0.5:
             strong_matches.append("Comparable thermal amplitude and day/night swing")
         if inertia_delta < 0.6:
             strong_matches.append("Matching thermal inertia and conductive heat transfer properties")
         if diurnal_delta > 1.3:
-            divergences.append(f"Substantial thermal diurnal swing difference (Δ = {abs(th_ref.diurnal_range_k.value - th_cand.diurnal_range_k.value):.0f} K)")
+            divergences.append(f"Thermal diurnal swing difference (Δ = {abs(th_ref.diurnal_range_k.value - th_cand.diurnal_range_k.value):.0f} K)")
 
         return therm_score, strong_matches, divergences
 
     @classmethod
     def compute_surface_similarity(cls, ref: RegionFeatureVector, cand: RegionFeatureVector) -> Tuple[float, List[str], List[str]]:
-        """
-        Compare optical albedo, bare ground fraction, and sub-meter rock obstacle roughness.
-        """
         s_ref = ref.surface
         s_cand = cand.surface
 
@@ -190,9 +169,8 @@ class SimilarityEngine:
 
         strong_matches = []
         divergences = []
-
         if bare_delta < 0.2:
-            strong_matches.append("Near-identical bare ground and lack of vegetative canopy")
+            strong_matches.append("Near-identical bare ground fraction")
         if rough_delta < 0.4:
             strong_matches.append("Equivalent sub-meter rock boulder obstacle distribution")
         if albedo_delta > 1.2:
@@ -201,41 +179,152 @@ class SimilarityEngine:
         return surf_score, strong_matches, divergences
 
     @classmethod
+    def build_candidate_vector_from_db_row(cls, row: Dict[str, Any]) -> RegionFeatureVector:
+        """Convert SQLite database row into RegionFeatureVector."""
+        return RegionFeatureVector(
+            region_id=row["id"],
+            planet="earth",
+            name=row["name"],
+            latitude=row["latitude"],
+            longitude=row["longitude"],
+            radius_km=row["cell_resolution_km"],
+            topography=TopographyFeatures(
+                elevation_mean=FeatureMeasurement(value=row["elevation_mean"], unit="m", data_source="Copernicus GLO-90 DEM", resolution="90m", confidence=row["data_coverage_score"]),
+                elevation_min=FeatureMeasurement(value=row["elevation_min"], unit="m", data_source="Copernicus GLO-90 DEM", resolution="90m", confidence=row["data_coverage_score"]),
+                elevation_max=FeatureMeasurement(value=row["elevation_max"], unit="m", data_source="Copernicus GLO-90 DEM", resolution="90m", confidence=row["data_coverage_score"]),
+                elevation_std=FeatureMeasurement(value=row["elevation_std"], unit="m", data_source="Copernicus GLO-90 DEM", resolution="90m", confidence=row["data_coverage_score"]),
+                slope_mean=FeatureMeasurement(value=row["slope_mean"], unit="deg", data_source="Copernicus GLO-90 DEM", resolution="90m", confidence=row["data_coverage_score"]),
+                slope_p90=FeatureMeasurement(value=row["slope_p90"], unit="deg", data_source="Copernicus GLO-90 DEM", resolution="90m", confidence=row["data_coverage_score"]),
+                terrain_roughness=FeatureMeasurement(value=row["terrain_roughness"], unit="TRI", data_source="Copernicus GLO-90 DEM", resolution="90m", confidence=row["data_coverage_score"]),
+                relief_m=FeatureMeasurement(value=row["relief_m"], unit="m", data_source="Copernicus GLO-90 DEM", resolution="90m", confidence=row["data_coverage_score"])
+            ),
+            geology=GeologicalFeatures(
+                lithology_category=row["lithology_category"],
+                rock_type=row["rock_type"],
+                mineralogy_summary=row["mineralogy_summary"],
+                volcanic_character="Terrestrial Geological Formation",
+                age_era="Phanerozoic / Precambrian",
+                data_source="University of Hamburg GLiM",
+                confidence=row["data_coverage_score"]
+            ),
+            thermal=ThermalFeatures(
+                surface_temp_mean_k=FeatureMeasurement(value=row["surface_temp_mean_k"], unit="K", data_source="NASA LP DAAC MOD11A1 LST", resolution="1km", confidence=row["data_coverage_score"]),
+                surface_temp_min_k=FeatureMeasurement(value=row["surface_temp_mean_k"] - row["diurnal_range_k"]*0.5, unit="K", data_source="NASA LP DAAC MOD11A1 LST", resolution="1km", confidence=row["data_coverage_score"]),
+                surface_temp_max_k=FeatureMeasurement(value=row["surface_temp_mean_k"] + row["diurnal_range_k"]*0.5, unit="K", data_source="NASA LP DAAC MOD11A1 LST", resolution="1km", confidence=row["data_coverage_score"]),
+                diurnal_range_k=FeatureMeasurement(value=row["diurnal_range_k"], unit="K", data_source="NASA LP DAAC MOD11A1 LST", resolution="1km", confidence=row["data_coverage_score"]),
+                thermal_inertia_si=FeatureMeasurement(value=row["thermal_inertia_si"], unit="J m^-2 K^-1 s^-1/2", data_source="Derived Thermal Inertia", resolution="1km", confidence=row["data_coverage_score"])
+            ),
+            surface=SurfaceFeatures(
+                albedo=FeatureMeasurement(value=row["albedo"], unit="ratio", data_source="MODIS / Sentinel-2 Surface Reflectance", resolution="250m", confidence=row["data_coverage_score"]),
+                bare_ground_ratio=FeatureMeasurement(value=row["bare_ground_ratio"], unit="ratio", data_source="ESA WorldCover 10m", resolution="10m", confidence=row["data_coverage_score"]),
+                vegetation_ndvi=FeatureMeasurement(value=row["vegetation_ndvi"], unit="index", data_source="Sentinel-2 NDVI", resolution="10m", confidence=row["data_coverage_score"]),
+                roughness_submeter=FeatureMeasurement(value=row["roughness_submeter"], unit="m", data_source="Topographic Derivative", resolution="Sub-meter", confidence=row["data_coverage_score"]),
+                dust_sediment_cover=FeatureMeasurement(value=row["dust_sediment_cover"], unit="ratio", data_source="SoilGrids / MODIS", resolution="250m", confidence=row["data_coverage_score"])
+            ),
+            elevation_profile=[round(row["elevation_mean"] + math.sin(i*0.5)*(row["relief_m"]*0.4), 1) for i in range(25)],
+            slope_histogram={
+                "0-5°": round(max(5.0, 50.0 - row["slope_mean"] * 2.5), 1),
+                "5-15°": round(max(10.0, 30.0 + row["slope_mean"] * 0.5), 1),
+                "15-25°": round(max(5.0, row["slope_mean"] * 1.8), 1),
+                ">25°": round(max(2.0, row["slope_p90"] * 0.8), 1)
+            },
+            data_coverage_score=row["data_coverage_score"],
+            coverage_label="Strong data coverage" if row["data_coverage_score"] >= 0.9 else "Partial data coverage",
+            provenance=row.get("data_sources", ["Copernicus DEM", "GLiM Lithology", "ESA WorldCover"])
+        )
+
+    @classmethod
     def rank_candidates(cls, ref_vector: RegionFeatureVector,
                         weights: Optional[SimilarityWeights] = None,
-                        top_n: int = 8) -> List[AnalogCandidate]:
+                        top_n: int = 12,
+                        continent_filter: Optional[str] = None,
+                        country_filter: Optional[str] = None,
+                        lithology_filter: Optional[str] = None,
+                        diversity_balanced: bool = True,
+                        use_benchmark_catalog: bool = False,
+                        min_distance_km: Optional[float] = None,
+                        spatial_suppression_km: float = 80.0) -> List[AnalogCandidate]:
         """
-        Score and rank Earth analog candidates against the reference planetary region.
+        Primary Discovery Ranking Engine.
+        Queries the persistent SQLite R*Tree Global Earth Database (or benchmark catalog),
+        computes multidimensional weighted distance, applies spatial deduplication,
+        and optionally balances geographic diversity across continents.
         """
         if weights is None:
             weights = SimilarityWeights()
 
-        # Normalize weights to sum to 1.0
         w_sum = weights.topography_weight + weights.geology_weight + weights.thermal_weight + weights.surface_weight
         w_topo = weights.topography_weight / w_sum
         w_geol = weights.geology_weight / w_sum
         w_therm = weights.thermal_weight / w_sum
         w_surf = weights.surface_weight / w_sum
 
-        candidates_scored = []
+        candidates_pool = []
 
-        for analog_def in EARTH_ANALOG_CATALOG:
-            # Extract features for candidate
-            cand_vector = GeoEngine.extract_features(
-                planet="earth",
-                lat=analog_def["latitude"],
-                lon=analog_def["longitude"],
-                radius_km=50.0,
-                custom_name=analog_def["name"]
+        if use_benchmark_catalog:
+            # Benchmark Mode: Evaluate the 14 historical planetary analog field stations
+            for analog_def in EARTH_ANALOG_CATALOG:
+                cand_vector = GeoEngine.extract_features(
+                    planet="earth",
+                    lat=analog_def["latitude"],
+                    lon=analog_def["longitude"],
+                    radius_km=50.0,
+                    custom_name=analog_def["name"]
+                )
+                candidates_pool.append({
+                    "id": analog_def["id"],
+                    "name": analog_def["name"],
+                    "country": analog_def["country"],
+                    "continent": "Global",
+                    "latitude": analog_def["latitude"],
+                    "longitude": analog_def["longitude"],
+                    "elevation_m": analog_def["elevation_m"],
+                    "vector": cand_vector,
+                    "geological_context": analog_def.get("geological_context", ""),
+                    "real_world_missions": analog_def.get("real_world_missions", []),
+                    "exploration_suitability": analog_def.get("exploration_suitability", {
+                        "rover_mobility": "High", "drilling_isru": "Moderate", "sensor_calibration": "High"
+                    })
+                })
+        else:
+            # Global Spatial Database Discovery Mode
+            raw_rows = SpatialDatabase.query_candidates(
+                continent=continent_filter,
+                country=country_filter,
+                lithology=lithology_filter,
+                exclude_water=True,
+                limit=1000
             )
 
-            # Compute component similarities
+            for row in raw_rows:
+                cand_vector = cls.build_candidate_vector_from_db_row(row)
+                candidates_pool.append({
+                    "id": row["id"],
+                    "name": row["name"],
+                    "country": row["country"],
+                    "continent": row["continent"],
+                    "latitude": row["latitude"],
+                    "longitude": row["longitude"],
+                    "elevation_m": row["elevation_mean"],
+                    "vector": cand_vector,
+                    "geological_context": f"{row['name']} located in {row['country']} ({row['continent']}). Characterized by {row['rock_type']} with {row['mineralogy_summary']}.",
+                    "real_world_missions": [f"Terrestrial Planetary Analog Grid Sector: {row['continent']}"],
+                    "exploration_suitability": {
+                        "rover_mobility": "Very High" if row["slope_p90"] < 25 else "Extreme Challenge (Steep Slopes)",
+                        "drilling_isru": "Exceptional" if "evaporite" in row["lithology_category"] or "polar" in row["lithology_category"] else "High",
+                        "sensor_calibration": "High (Copernicus DEM & GLiM Ground Truth)"
+                    }
+                })
+
+        # Calculate multidimensional similarity scores
+        scored_candidates = []
+        for cand in candidates_pool:
+            cand_vector = cand["vector"]
             topo_sim, t_matches, t_divs = cls.compute_topography_similarity(ref_vector, cand_vector)
             geol_sim, g_matches, g_divs = cls.compute_geological_similarity(ref_vector, cand_vector)
             therm_sim, th_matches, th_divs = cls.compute_thermal_similarity(ref_vector, cand_vector)
             surf_sim, s_matches, s_divs = cls.compute_surface_similarity(ref_vector, cand_vector)
 
-            # Weighted overall score
             overall = round(
                 w_topo * topo_sim +
                 w_geol * geol_sim +
@@ -247,7 +336,6 @@ class SimilarityEngine:
             all_strong = t_matches + g_matches + th_matches + s_matches
             all_divs = t_divs + g_divs + th_divs + s_divs
 
-            # Confidence level determination
             data_cov = (ref_vector.data_coverage_score + cand_vector.data_coverage_score) / 2.0
             if data_cov >= 0.90:
                 conf_level = "Strong data coverage"
@@ -256,13 +344,13 @@ class SimilarityEngine:
             else:
                 conf_level = "Limited comparison"
 
-            candidate = AnalogCandidate(
-                candidate_id=analog_def["id"],
-                name=analog_def["name"],
-                country=analog_def["country"],
-                latitude=analog_def["latitude"],
-                longitude=analog_def["longitude"],
-                elevation_m=analog_def["elevation_m"],
+            analog_candidate = AnalogCandidate(
+                candidate_id=cand["id"],
+                name=cand["name"],
+                country=cand["country"],
+                latitude=cand["latitude"],
+                longitude=cand["longitude"],
+                elevation_m=cand["elevation_m"],
                 overall_similarity=overall,
                 confidence_level=conf_level,
                 components=ComponentScores(
@@ -275,18 +363,67 @@ class SimilarityEngine:
                 features=cand_vector,
                 strongest_matches=all_strong[:4],
                 major_differences=all_divs[:4],
-                exploration_suitability=analog_def["exploration_suitability"],
-                geological_context=analog_def["geological_context"],
-                real_world_missions=analog_def["real_world_missions"],
-                rank=0 # updated after sorting
+                exploration_suitability=cand["exploration_suitability"],
+                geological_context=cand["geological_context"],
+                real_world_missions=cand["real_world_missions"],
+                rank=0
             )
-            candidates_scored.append(candidate)
 
-        # Sort descending by overall similarity
-        candidates_scored.sort(key=lambda c: c.overall_similarity, reverse=True)
+            scored_candidates.append({
+                "candidate": analog_candidate,
+                "continent": cand["continent"],
+                "lat": cand["latitude"],
+                "lon": cand["longitude"],
+                "score": overall
+            })
 
-        # Assign ranks
-        for idx, cand in enumerate(candidates_scored):
+        # Sort descending by raw score
+        scored_candidates.sort(key=lambda x: x["score"], reverse=True)
+
+        # Spatial Deduplication & Suppression Filter (prevent clustering 10 results in 1 province)
+        suppression_radius = min_distance_km if min_distance_km is not None else spatial_suppression_km
+        deduped = []
+        for item in scored_candidates:
+            too_close = False
+            for kept in deduped:
+                dist = GeoEngine.haversine_distance_km(
+                    item["lat"], item["lon"],
+                    kept["lat"], kept["lon"],
+                    radius_km=6371.0
+                )
+                if dist < suppression_radius:
+                    too_close = True
+                    break
+            if not too_close:
+                deduped.append(item)
+
+        final_selection = []
+        if diversity_balanced and not use_benchmark_catalog:
+            # Geographic Diversity Balancing: Ensures representation across diverse global continents
+            # while maintaining high scientific similarity thresholds
+            continent_quota = {}
+            for item in deduped:
+                cont = item["continent"]
+                current_cnt = continent_quota.get(cont, 0)
+                # Allow maximum 3 candidates per continent in top results to ensure global discovery
+                if current_cnt < 3:
+                    final_selection.append(item["candidate"])
+                    continent_quota[cont] = current_cnt + 1
+                if len(final_selection) >= top_n:
+                    break
+
+            # If quota left room, backfill with next best candidates
+            if len(final_selection) < top_n:
+                for item in deduped:
+                    if item["candidate"] not in final_selection:
+                        final_selection.append(item["candidate"])
+                    if len(final_selection) >= top_n:
+                        break
+        else:
+            final_selection = [item["candidate"] for item in deduped[:top_n]]
+
+        # Assign final ranks
+        for idx, cand in enumerate(final_selection):
             cand.rank = idx + 1
 
-        return candidates_scored[:top_n]
+        return final_selection

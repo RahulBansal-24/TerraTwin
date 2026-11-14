@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { ThreeGlobe } from '../components/ThreeGlobe';
 import { CesiumEarth } from '../components/CesiumEarth';
-import { PlanetInfo, ExplorationRegion, RegionFeatureVector, SimilarityWeights } from '../types';
-import { selectRegion, startAnalysis } from '../api';
-import { Compass, Sliders, Database, ArrowRight, ShieldCheck, Mountain, Flame, Layers, Activity } from 'lucide-react';
+import { PlanetInfo, ExplorationRegion, RegionFeatureVector, SimilarityWeights, DatabaseStats, PlanetaryFeature } from '../types';
+import { selectRegion, startAnalysis, fetchDatabaseStats, fetchPlanetaryFeatures } from '../api';
+import { Compass, Sliders, Database, ArrowRight, ShieldCheck, Mountain, Flame, Layers, Activity, Globe, Sparkles, Search, CheckCircle } from 'lucide-react';
 
 interface ExplorerViewProps {
   planet: 'earth' | 'moon' | 'mars';
@@ -39,6 +39,34 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({
     surface_weight: 0.15,
   });
 
+  // Global Earth Candidate Database & IAU Gazetteer state
+  const [searchMode, setSearchMode] = useState<'global' | 'benchmark'>('global');
+  const [diversityBalanced, setDiversityBalanced] = useState<boolean>(true);
+  const [continentFilter, setContinentFilter] = useState<string>('');
+  const [candidateLimit, setCandidateLimit] = useState<number>(12);
+  const [dbStats, setDbStats] = useState<DatabaseStats | null>(null);
+  const [planetaryFeatures, setPlanetaryFeatures] = useState<PlanetaryFeature[]>([]);
+  const [gazetteerSearch, setGazetteerSearch] = useState<string>('');
+  const [showGazetteerDropdown, setShowGazetteerDropdown] = useState<boolean>(false);
+
+  // Load database statistics
+  useEffect(() => {
+    fetchDatabaseStats()
+      .then((stats) => setDbStats(stats))
+      .catch((err) => console.warn('Database stats fetch:', err));
+  }, []);
+
+  // Load IAU gazetteer features for Moon / Mars
+  useEffect(() => {
+    if (planet === 'earth') {
+      setPlanetaryFeatures([]);
+      return;
+    }
+    fetchPlanetaryFeatures(planet)
+      .then((features) => setPlanetaryFeatures(features))
+      .catch((err) => console.warn('Gazetteer features fetch:', err));
+  }, [planet]);
+
   // Extract preview features when coordinates or radius changes
   useEffect(() => {
     let isMounted = true;
@@ -66,6 +94,28 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({
     return () => { isMounted = false; };
   }, [planet, selectedCoords, radiusKm, selectedRegion]);
 
+  const handleSelectGazetteerFeature = (feat: PlanetaryFeature) => {
+    setSelectedCoords({ lat: feat.latitude, lon: feat.longitude });
+    const recommendedRadius = Math.max(15, Math.min(250, Math.round(feat.diameter_km / 2)));
+    setRadiusKm(recommendedRadius > 0 ? recommendedRadius : 50);
+    setSelectedRegion({
+      id: feat.feature_id,
+      planet: feat.planet,
+      name: feat.name,
+      latitude: feat.latitude,
+      longitude: feat.longitude,
+      elevation_m: 0,
+      diameter_km: feat.diameter_km,
+      geological_period: feat.feature_type,
+      description: feat.geological_context || `Official IAU ${feat.feature_type} on ${feat.planet.toUpperCase()}`,
+      mission_significance: feat.quadrangle ? `Located in quadrangle ${feat.quadrangle}` : 'Scientific Target',
+      key_features: [feat.feature_type, `${feat.diameter_km} km diameter`],
+      scientific_targets: ['Morphometric comparison', 'Terrestrial analogue mapping'],
+    });
+    setShowGazetteerDropdown(false);
+    setGazetteerSearch(feat.name);
+  };
+
   const handleStartDiscovery = async () => {
     try {
       setAnalyzing(true);
@@ -75,6 +125,10 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({
         longitude: selectedCoords.lon,
         radius_km: radiusKm,
         weights,
+        use_benchmark_catalog: searchMode === 'benchmark',
+        diversity_balanced: diversityBalanced,
+        continent_filter: continentFilter ? continentFilter : undefined,
+        limit: candidateLimit,
       });
       onAnalysisComplete(result);
     } catch (err) {
@@ -170,6 +224,59 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({
 
         {/* Right: Region Specification & Scientific Telemetry */}
         <div className="lg:col-span-4 flex flex-col gap-4">
+          {/* IAU Gazetteer Quick Picker (Moon & Mars) */}
+          {planet !== 'earth' && planetaryFeatures.length > 0 && (
+            <div className="glass-panel p-4 rounded-2xl border border-sky-900/30 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-white flex items-center gap-1.5">
+                  <Search size={14} className="text-sky-400" />
+                  IAU Gazetteer Features ({planet.toUpperCase()})
+                </span>
+                <span className="text-[10px] text-slate-400 font-mono">
+                  {planetaryFeatures.length} Official Targets
+                </span>
+              </div>
+
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder={`Search ${planet === 'moon' ? 'craters, maria...' : 'craters, chasmata, montes...'}`}
+                  value={gazetteerSearch}
+                  onChange={(e) => {
+                    setGazetteerSearch(e.target.value);
+                    setShowGazetteerDropdown(true);
+                  }}
+                  onFocus={() => setShowGazetteerDropdown(true)}
+                  className="w-full bg-[#050811] text-xs px-3 py-2 rounded-xl border border-slate-800 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-sky-500 transition"
+                />
+
+                {showGazetteerDropdown && (
+                  <div className="absolute z-20 mt-1 w-full max-h-48 overflow-y-auto bg-[#0a0f1d] border border-slate-700 rounded-xl shadow-2xl py-1">
+                    {planetaryFeatures
+                      .filter((f) => f.name.toLowerCase().includes(gazetteerSearch.toLowerCase()) || f.feature_type.toLowerCase().includes(gazetteerSearch.toLowerCase()))
+                      .slice(0, 15)
+                      .map((feat) => (
+                        <button
+                          key={feat.feature_id}
+                          onClick={() => handleSelectGazetteerFeature(feat)}
+                          className="w-full text-left px-3 py-1.5 hover:bg-sky-950/70 text-xs flex items-center justify-between transition border-b border-slate-800/40 last:border-0"
+                        >
+                          <div>
+                            <span className="font-semibold text-white">{feat.name}</span>
+                            <span className="text-[10px] text-slate-400 ml-1.5">({feat.feature_type})</span>
+                          </div>
+                          <span className="text-[10px] text-sky-400 font-mono">{feat.diameter_km} km</span>
+                        </button>
+                      ))}
+                    {planetaryFeatures.filter((f) => f.name.toLowerCase().includes(gazetteerSearch.toLowerCase())).length === 0 && (
+                      <div className="px-3 py-2 text-xs text-slate-500">No matching features found</div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Coordinates and Radius Card */}
           <div className="glass-panel p-5 rounded-2xl border border-sky-900/30 flex flex-col gap-4">
             <div className="flex items-center justify-between">
@@ -292,6 +399,106 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({
                     className="w-full accent-emerald-400 h-1"
                   />
                 </div>
+              </div>
+            )}
+          </div>
+
+          {/* Discovery Engine Configuration Card */}
+          <div className="glass-panel p-4 rounded-2xl border border-sky-900/30 space-y-3">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-semibold text-white flex items-center gap-1.5">
+                <Globe size={14} className="text-sky-400" />
+                Discovery Engine Pool
+              </span>
+              <span className="text-[10px] text-sky-300 font-mono">
+                {searchMode === 'global' ? `${dbStats?.total_candidates || 200}+ Earth Cells` : '14 Benchmarks'}
+              </span>
+            </div>
+
+            {/* Mode Toggle */}
+            <div className="grid grid-cols-2 gap-2 p-1 bg-[#050811] rounded-xl border border-slate-800">
+              <button
+                type="button"
+                onClick={() => setSearchMode('global')}
+                className={`py-1.5 px-2 rounded-lg text-xs font-medium transition ${
+                  searchMode === 'global'
+                    ? 'bg-sky-600 text-white shadow-sm'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                Global Database
+              </button>
+              <button
+                type="button"
+                onClick={() => setSearchMode('benchmark')}
+                className={`py-1.5 px-2 rounded-lg text-xs font-medium transition ${
+                  searchMode === 'benchmark'
+                    ? 'bg-sky-600 text-white shadow-sm'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                Curated Benchmarks
+              </button>
+            </div>
+
+            {searchMode === 'global' && (
+              <div className="space-y-2 pt-1 text-xs">
+                {/* Diversity-Balanced Switch */}
+                <label className="flex items-center justify-between cursor-pointer py-1">
+                  <span className="text-slate-300 text-[11px]">Diversity-Balanced (Inter-continental)</span>
+                  <input
+                    type="checkbox"
+                    checked={diversityBalanced}
+                    onChange={(e) => setDiversityBalanced(e.target.checked)}
+                    className="accent-sky-500 rounded"
+                  />
+                </label>
+
+                {/* Continent Filter */}
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-slate-400">Continent Filter:</span>
+                  <select
+                    value={continentFilter}
+                    onChange={(e) => setContinentFilter(e.target.value)}
+                    className="bg-[#050811] text-slate-200 text-xs px-2 py-1 rounded border border-slate-800 focus:outline-none focus:border-sky-500"
+                  >
+                    <option value="">All Continents (Global)</option>
+                    <option value="Africa">Africa</option>
+                    <option value="Antarctica">Antarctica</option>
+                    <option value="Asia">Asia</option>
+                    <option value="Europe">Europe</option>
+                    <option value="North America">North America</option>
+                    <option value="South America">South America</option>
+                    <option value="Oceania">Oceania</option>
+                  </select>
+                </div>
+
+                {/* Candidate Count */}
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-slate-400">Candidate Pool Limit:</span>
+                  <div className="flex gap-1.5">
+                    {[10, 15, 20].map((num) => (
+                      <button
+                        key={num}
+                        type="button"
+                        onClick={() => setCandidateLimit(num)}
+                        className={`px-2 py-0.5 rounded text-[10px] font-mono border ${
+                          candidateLimit === num
+                            ? 'bg-sky-500/20 text-sky-300 border-sky-500/60 font-bold'
+                            : 'bg-slate-900 text-slate-400 border-slate-800'
+                        }`}
+                      >
+                        {num}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {dbStats && (
+                  <div className="text-[10px] text-slate-500 font-mono pt-1 border-t border-slate-800/80">
+                    Spatial Index: SQLite R*Tree ({dbStats.continents_count} continents, {dbStats.coarse_cells} coarse cells)
+                  </div>
+                )}
               </div>
             )}
           </div>

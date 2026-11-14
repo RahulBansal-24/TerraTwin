@@ -50,7 +50,13 @@ class AnalysisRequest(BaseModel):
     radius_km: float = Field(50.0, ge=5.0, le=500.0)
     weights: SimilarityWeights = Field(default_factory=SimilarityWeights)
     min_confidence: Optional[float] = 0.5
-    filter_environment: Optional[str] = "all" # "all", "volcanic", "desert", "polar", "impact"
+    filter_environment: Optional[str] = "all"
+    continent_filter: Optional[str] = "all"
+    country_filter: Optional[str] = "all"
+    lithology_filter: Optional[str] = "all"
+    diversity_balanced: bool = True
+    use_benchmark_catalog: bool = False
+    limit: int = Field(12, ge=1, le=50)
 
 class AnalysisResult(BaseModel):
     analysis_id: str
@@ -65,3 +71,6 @@ class AnalysisResult(BaseModel):
     total_candidates_searched: int
     computation_time_ms: float
     scientific_summary: str
+    database_mode: str = "Global Spatial Database"
+    diversity_balanced: bool = True
+    continents_represented: List[str] = []
