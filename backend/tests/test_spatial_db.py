@@ -144,5 +144,39 @@ class TestSpatialDatabaseAndGazetteer(unittest.TestCase):
         for c in craters:
             self.assertEqual(c["feature_type"], "Crater")
 
+    def test_no_sector_labels_in_database(self):
+        """Verify that the misleading 'Sector X' label is completely eliminated."""
+        all_cands = self.db.query_candidates(limit=1000)
+        for cand in all_cands:
+            self.assertNotIn("Sector", cand["name"], f"Candidate {cand['name']} still contains 'Sector'")
+
+    def test_strict_province_deduplication(self):
+        """Verify that no two candidates in the top results share the same macro-province."""
+        vector = GeoEngine.extract_features(planet="mars", lat=-21.2, lon=119.4) # Pilbara-like coordinates
+        candidates = SimilarityEngine.rank_candidates(vector, top_n=10)
+        
+        provinces = []
+        for cand in candidates:
+            base_prov = cand.name.split(" (")[0].strip() if " (" in cand.name else cand.name.strip()
+            provinces.append(base_prov)
+
+        self.assertEqual(len(provinces), len(set(provinces)), f"Duplicate province found in top results: {provinces}")
+
+    def test_ludhiana_on_demand_extraction(self):
+        """Verify on-demand extraction for Ludhiana (Punjab, India) returns authentic alluvial plain metrics."""
+        vector = GeoEngine.extract_features(planet="earth", lat=30.9, lon=75.8, radius_km=30.0)
+        self.assertEqual(vector.geology.lithology_category, "sedimentary_alluvial")
+        self.assertLess(vector.topography.slope_mean.value, 3.0)
+        self.assertAlmostEqual(vector.topography.elevation_mean.value, 230.0, delta=50.0)
+        self.assertGreater(vector.surface.vegetation_ndvi.value, 0.4)
+
+    def test_continent_specific_query(self):
+        """Verify that filtering by continent returns candidates strictly belonging to that continent."""
+        vector = GeoEngine.extract_features(planet="moon", lat=-89.9, lon=0.0)
+        asia_cands = SimilarityEngine.rank_candidates(vector, continent_filter="Asia", top_n=6)
+        self.assertGreater(len(asia_cands), 0)
+        for cand in asia_cands:
+            self.assertEqual(cand.continent, "Asia")
+
 if __name__ == "__main__":
     unittest.main()

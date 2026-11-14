@@ -345,7 +345,134 @@ def generate_global_earth_grid() -> List[Dict[str, Any]]:
             "elev_base": 720.0, "relief": 280.0, "slope_m": 13.5, "slope_90": 27.0, "tri": 72.0,
             "temp_k": 299.0, "diurnal": 45.0, "inertia": 480.0, "albedo": 0.20, "bare": 0.90, "ndvi": 0.08,
             "class": "barren_rock", "dust": 0.50, "sub_rough": 0.52
+        },
+
+        # ADDITIONAL EXPANDED GLOBAL ANALOGS ACROSS ASIA, AMERICAS, EUROPE, AFRICA, OCEANIA
+        {
+            "province": "Indo-Gangetic Plain & Punjab Alluvial Basin", "country": "India", "continent": "Asia",
+            "lat": 30.9, "lon": 75.8, "radius_deg": 1.5, "count_points": 14,
+            "lithology": "sedimentary_alluvial", "rock": "Quaternary Indo-Gangetic Alluvial Silt, Clay, and Sand Beds",
+            "minerals": "Quartz, microcline, illite, smectite, chlorite, kankar nodules",
+            "elev_base": 245.0, "relief": 30.0, "slope_m": 0.8, "slope_90": 1.6, "tri": 5.0,
+            "temp_k": 298.0, "diurnal": 26.0, "inertia": 580.0, "albedo": 0.17, "bare": 0.30, "ndvi": 0.65,
+            "class": "alluvial_plain", "dust": 0.40, "sub_rough": 0.20
+        },
+        {
+            "province": "Thar Desert Dunefields (Marusthali)", "country": "India", "continent": "Asia",
+            "lat": 27.0, "lon": 71.5, "radius_deg": 2.0, "count_points": 14,
+            "lithology": "hyperarid_playa_evaporite", "rock": "Longitudinal Seif Dunes and Calcrete Playas",
+            "minerals": "Quartz sand, feldspar, calcite, gypsum, illite",
+            "elev_base": 185.0, "relief": 110.0, "slope_m": 8.0, "slope_90": 17.5, "tri": 35.0,
+            "temp_k": 303.0, "diurnal": 45.0, "inertia": 340.0, "albedo": 0.27, "bare": 0.92, "ndvi": 0.08,
+            "class": "desert_sand", "dust": 0.85, "sub_rough": 0.30
+        },
+        {
+            "province": "Great Rann of Kutch Salt Marsh", "country": "India", "continent": "Asia",
+            "lat": 23.8, "lon": 70.5, "radius_deg": 1.5, "count_points": 12,
+            "lithology": "hyperarid_playa_evaporite", "rock": "Endorheic Halite Crust and Seasonal Evaporite Silt",
+            "minerals": "Halite, gypsum, thenardite, marine smectite clay",
+            "elev_base": 10.0, "relief": 12.0, "slope_m": 0.4, "slope_90": 1.1, "tri": 4.0,
+            "temp_k": 301.0, "diurnal": 34.0, "inertia": 410.0, "albedo": 0.50, "bare": 0.98, "ndvi": 0.02,
+            "class": "salt_crust", "dust": 0.90, "sub_rough": 0.15
+        },
+        {
+            "province": "Tibetan High Plateau (Changtang)", "country": "China", "continent": "Asia",
+            "lat": 33.5, "lon": 85.5, "radius_deg": 2.2, "count_points": 15,
+            "lithology": "polar_permafrost_ice", "rock": "Permafrost Cryic Steppe and High-Altitude Lacustrine Borates",
+            "minerals": "Quartz, feldspar, borax, mirabilite, interstitial ice",
+            "elev_base": 4750.0, "relief": 850.0, "slope_m": 6.5, "slope_90": 14.5, "tri": 44.0,
+            "temp_k": 265.0, "diurnal": 52.0, "inertia": 430.0, "albedo": 0.24, "bare": 0.86, "ndvi": 0.12,
+            "class": "permafrost_ice", "dust": 0.60, "sub_rough": 0.45
+        },
+        {
+            "province": "Himalayan Cryo-Cirques (Khumbu)", "country": "Nepal", "continent": "Asia",
+            "lat": 27.9, "lon": 86.8, "radius_deg": 1.0, "count_points": 10,
+            "lithology": "silicified_craton", "rock": "Higher Himalayan Leucogranite, Gneiss, and Glacial Moraine",
+            "minerals": "Quartz, tourmaline, muscovite, sillimanite, glacial ice",
+            "elev_base": 5100.0, "relief": 2600.0, "slope_m": 26.5, "slope_90": 44.0, "tri": 160.0,
+            "temp_k": 258.0, "diurnal": 36.0, "inertia": 510.0, "albedo": 0.42, "bare": 0.96, "ndvi": 0.02,
+            "class": "permafrost_ice", "dust": 0.30, "sub_rough": 0.85
+        },
+        {
+            "province": "Mississippi Alluvial Floodplain", "country": "United States", "continent": "North America",
+            "lat": 33.8, "lon": -90.8, "radius_deg": 1.5, "count_points": 12,
+            "lithology": "sedimentary_alluvial", "rock": "Meander Belt Silts, Backswamp Clays, and Channel Sand",
+            "minerals": "Quartz, smectite, illite, kaolinite, organic-rich silt",
+            "elev_base": 42.0, "relief": 22.0, "slope_m": 0.5, "slope_90": 1.1, "tri": 4.0,
+            "temp_k": 294.0, "diurnal": 24.0, "inertia": 610.0, "albedo": 0.16, "bare": 0.22, "ndvi": 0.72,
+            "class": "alluvial_plain", "dust": 0.35, "sub_rough": 0.20
+        },
+        {
+            "province": "Pampas Alluvial Basin", "country": "Argentina", "continent": "South America",
+            "lat": -34.5, "lon": -61.5, "radius_deg": 1.5, "count_points": 12,
+            "lithology": "sedimentary_alluvial", "rock": "Quaternary Pampean Loess and Alluvial Sediments",
+            "minerals": "Quartz, plagioclase, volcanic glass, illite, smectite",
+            "elev_base": 80.0, "relief": 25.0, "slope_m": 0.6, "slope_90": 1.3, "tri": 5.0,
+            "temp_k": 290.0, "diurnal": 25.0, "inertia": 590.0, "albedo": 0.18, "bare": 0.26, "ndvi": 0.68,
+            "class": "alluvial_plain", "dust": 0.35, "sub_rough": 0.20
+        },
+        {
+            "province": "Salinas Grandes Salt Flat", "country": "Argentina", "continent": "South America",
+            "lat": -29.8, "lon": -64.8, "radius_deg": 1.2, "count_points": 10,
+            "lithology": "hyperarid_playa_evaporite", "rock": "Extensive Halite Salt Crust and Lithium-Rich Subsurface Brine",
+            "minerals": "Halite, gypsum, thenardite, clay silt",
+            "elev_base": 185.0, "relief": 12.0, "slope_m": 0.3, "slope_90": 0.8, "tri": 3.0,
+            "temp_k": 297.0, "diurnal": 42.0, "inertia": 390.0, "albedo": 0.54, "bare": 1.0, "ndvi": 0.00,
+            "class": "salt_crust", "dust": 0.95, "sub_rough": 0.15
+        },
+        {
+            "province": "Po Valley Sedimentary Lowland", "country": "Italy", "continent": "Europe",
+            "lat": 45.1, "lon": 10.2, "radius_deg": 1.2, "count_points": 10,
+            "lithology": "sedimentary_alluvial", "rock": "Quaternary Fluvial Alluvial Gravels and Silt Formations",
+            "minerals": "Quartz, calcite, clay minerals, feldspar",
+            "elev_base": 65.0, "relief": 20.0, "slope_m": 0.7, "slope_90": 1.5, "tri": 5.0,
+            "temp_k": 288.0, "diurnal": 25.0, "inertia": 590.0, "albedo": 0.17, "bare": 0.22, "ndvi": 0.70,
+            "class": "alluvial_plain", "dust": 0.35, "sub_rough": 0.22
+        },
+        {
+            "province": "Nullarbor Karst Limestone Plain", "country": "Australia", "continent": "Oceania",
+            "lat": -31.0, "lon": 128.5, "radius_deg": 2.0, "count_points": 14,
+            "lithology": "silicified_craton", "rock": "Cenozoic Eucla Karst Limestone, Dry Caves, and Blowholes",
+            "minerals": "Calcite, dolomite, microcrystalline silica, terra rossa residual clay",
+            "elev_base": 135.0, "relief": 30.0, "slope_m": 1.1, "slope_90": 2.6, "tri": 11.0,
+            "temp_k": 294.0, "diurnal": 38.0, "inertia": 490.0, "albedo": 0.22, "bare": 0.86, "ndvi": 0.12,
+            "class": "barren_rock", "dust": 0.50, "sub_rough": 0.35
+        },
+        {
+            "province": "Flinders Ranges & Wilpena Pound", "country": "Australia", "continent": "Oceania",
+            "lat": -31.5, "lon": 138.6, "radius_deg": 1.5, "count_points": 12,
+            "lithology": "silicified_craton", "rock": "Ediacaran Pound Sub-Basin Quartzite Ridges and Fossil Strata",
+            "minerals": "Orthoquartzite, sandstone, siltstone, hematite coatings",
+            "elev_base": 720.0, "relief": 620.0, "slope_m": 14.0, "slope_90": 29.5, "tri": 84.0,
+            "temp_k": 293.0, "diurnal": 44.0, "inertia": 520.0, "albedo": 0.20, "bare": 0.89, "ndvi": 0.09,
+            "class": "barren_rock", "dust": 0.45, "sub_rough": 0.58
+        },
+        {
+            "province": "Great Rift Valley & Lake Natron", "country": "Tanzania", "continent": "Africa",
+            "lat": -2.4, "lon": 36.0, "radius_deg": 1.2, "count_points": 12,
+            "lithology": "basaltic_volcanic", "rock": "Natrocarbonatite Volcanic Ash and Hyper-Saline Soda Lake Crusts",
+            "minerals": "Nyerereite, gregoryite, nepheline, trona, halite",
+            "elev_base": 615.0, "relief": 880.0, "slope_m": 10.5, "slope_90": 24.5, "tri": 68.0,
+            "temp_k": 303.0, "diurnal": 36.0, "inertia": 450.0, "albedo": 0.29, "bare": 0.91, "ndvi": 0.07,
+            "class": "volcanic_field", "dust": 0.55, "sub_rough": 0.50
+        },
+        {
+            "province": "Ténéré Erg & Sahara Sand Sea", "country": "Niger", "continent": "Africa",
+            "lat": 18.5, "lon": 10.5, "radius_deg": 2.2, "count_points": 14,
+            "lithology": "hyperarid_playa_evaporite", "rock": "Colossal Hyper-Arid Quartz Dunefield and Paleolake Silts",
+            "minerals": "Quartz sand, diatomite, halite",
+            "elev_base": 415.0, "relief": 150.0, "slope_m": 9.5, "slope_90": 21.0, "tri": 46.0,
+            "temp_k": 305.0, "diurnal": 47.0, "inertia": 320.0, "albedo": 0.33, "bare": 1.0, "ndvi": 0.00,
+            "class": "desert_sand", "dust": 0.92, "sub_rough": 0.24
         }
+    ]
+
+    SUB_TOPOGRAPHY_LABELS = [
+        "Core Outcrop", "North Flank", "Eastern Plateau", "Southern Ridge",
+        "Western Basin", "Northeast Steppe", "Northwest Canyon", "Southeast Apron",
+        "Southwest Scarp", "Upper Terrace", "Alluvial Fan Margin", "Basal Pediment",
+        "Central Depression", "Perimeter Dunefield", "Highland Summit", "Fluvial Channel Belt",
+        "Outer Graben", "Bedrock Terrace", "Interdune Flat", "Crustal Escarpment"
     ]
 
     # Generate multi-point hierarchical grid cells around each geological province
@@ -364,7 +491,8 @@ def generate_global_earth_grid() -> List[Dict[str, Any]]:
                 r = radius * math.sqrt(idx / count)
                 d_lat = r * math.cos(theta)
                 d_lon = r * math.sin(theta) / max(0.2, math.cos(math.radians(p["lat"])))
-                cell_name = f"{p['province']} - Sector {idx}"
+                sub_label = SUB_TOPOGRAPHY_LABELS[idx % len(SUB_TOPOGRAPHY_LABELS)]
+                cell_name = f"{p['province']} ({sub_label})"
 
             c_lat = round(p["lat"] + d_lat, 4)
             c_lon = round(p["lon"] + d_lon, 4)

@@ -6,7 +6,7 @@ import { ComparisonView } from './views/ComparisonView';
 import { AssistantView } from './views/AssistantView';
 import { MethodologyView } from './views/MethodologyView';
 import { PlanetInfo, ExplorationRegion, AnalysisResult, AnalogCandidate } from './types';
-import { fetchPlanetDetails } from './api';
+import { fetchPlanetDetails, startAnalysis } from './api';
 
 export function App() {
   const [activeTab, setActiveTab] = useState<string>('explorer');
@@ -53,6 +53,28 @@ export function App() {
       setSelectedCandidate(result.candidates[0]);
     }
     setActiveTab('discovery');
+  };
+
+  const handleFilterByContinent = async (continent: string) => {
+    if (!analysisResult) return;
+    try {
+      const newResult = await startAnalysis({
+        planet: analysisResult.reference_planet,
+        latitude: analysisResult.reference_coordinates.latitude,
+        longitude: analysisResult.reference_coordinates.longitude,
+        radius_km: analysisResult.radius_km,
+        weights: analysisResult.weights_used,
+        continent_filter: continent === 'all' ? undefined : continent,
+        diversity_balanced: continent === 'all',
+        limit: 12
+      });
+      setAnalysisResult(newResult);
+      if (newResult.candidates.length > 0) {
+        setSelectedCandidate(newResult.candidates[0]);
+      }
+    } catch (err) {
+      console.error('Failed to filter by continent:', err);
+    }
   };
 
   const handleSelectPreset = (preset: { planet: 'moon' | 'mars'; lat: number; lon: number; name: string }) => {
@@ -105,6 +127,7 @@ export function App() {
               setActiveTab('assistant');
             }}
             onBackToExplorer={() => setActiveTab('explorer')}
+            onFilterByContinent={handleFilterByContinent}
           />
         )}
 

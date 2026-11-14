@@ -143,6 +143,7 @@ export interface AnalogCandidate {
   candidate_id: string;
   name: string;
   country: string;
+  continent?: string;
   latitude: number;
   longitude: number;
   elevation_m: number;

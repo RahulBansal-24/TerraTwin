@@ -11,7 +11,38 @@ interface DiscoveryViewProps {
   onLaunchComparison: (cand: AnalogCandidate) => void;
   onLaunchAssistant: (cand: AnalogCandidate) => void;
   onBackToExplorer: () => void;
+  onFilterByContinent?: (continent: string) => void;
 }
+
+const COUNTRY_TO_CONTINENT: Record<string, string> = {
+  'india': 'Asia',
+  'iran': 'Asia',
+  'mongolia': 'Asia',
+  'saudi arabia': 'Asia',
+  'china': 'Asia',
+  'russia': 'Asia',
+  'nepal': 'Asia',
+  'chad': 'Africa',
+  'ethiopia': 'Africa',
+  'namibia': 'Africa',
+  'algeria': 'Africa',
+  'south africa': 'Africa',
+  'mauritania': 'Africa',
+  'tanzania': 'Africa',
+  'niger': 'Africa',
+  'antarctica': 'Antarctica',
+  'iceland': 'Europe',
+  'norway': 'Europe',
+  'spain': 'Europe',
+  'germany': 'Europe',
+  'italy': 'Europe',
+  'united states': 'North America',
+  'canada': 'North America',
+  'chile': 'South America',
+  'bolivia': 'South America',
+  'argentina': 'South America',
+  'australia': 'Oceania',
+};
 
 export const DiscoveryView: React.FC<DiscoveryViewProps> = ({
   analysisResult,
@@ -20,6 +51,7 @@ export const DiscoveryView: React.FC<DiscoveryViewProps> = ({
   onLaunchComparison,
   onLaunchAssistant,
   onBackToExplorer,
+  onFilterByContinent,
 }) => {
   const [filterType, setFilterType] = useState<string>('all');
   const [continentFilter, setContinentFilter] = useState<string>('all');
@@ -42,9 +74,19 @@ export const DiscoveryView: React.FC<DiscoveryViewProps> = ({
     );
   }
 
+  const handleContinentChange = (newContinent: string) => {
+    setContinentFilter(newContinent);
+    if (onFilterByContinent) {
+      onFilterByContinent(newContinent);
+    }
+  };
+
   const filteredCandidates = analysisResult.candidates.filter((cand) => {
     const matchesLithology = filterType === 'all' || cand.features.geology.lithology_category.toLowerCase().includes(filterType.toLowerCase());
-    const matchesContinent = continentFilter === 'all' || (cand.country && cand.country.toLowerCase().includes(continentFilter.toLowerCase())) || (cand.name && cand.name.toLowerCase().includes(continentFilter.toLowerCase()));
+    const candContinent = cand.continent || COUNTRY_TO_CONTINENT[cand.country?.toLowerCase()] || '';
+    const matchesContinent = continentFilter === 'all' ||
+      candContinent.toLowerCase() === continentFilter.toLowerCase() ||
+      (cand.country && cand.country.toLowerCase().includes(continentFilter.toLowerCase()));
     return matchesLithology && matchesContinent;
   });
 
@@ -125,7 +167,7 @@ export const DiscoveryView: React.FC<DiscoveryViewProps> = ({
             <span className="text-xs text-slate-400">Continent:</span>
             <select
               value={continentFilter}
-              onChange={(e) => setContinentFilter(e.target.value)}
+              onChange={(e) => handleContinentChange(e.target.value)}
               className="bg-[#050811] text-slate-200 text-xs px-2 py-1 rounded-lg border border-slate-800 focus:outline-none focus:border-sky-500"
             >
               <option value="all">All Continents</option>

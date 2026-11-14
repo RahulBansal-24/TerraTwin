@@ -225,36 +225,231 @@ class GeoEngine:
                     "dust_sediment_cover": 0.65
                 }
             else: # earth
-                elev_mean = 800.0
-                elev_min = 200.0
-                elev_max = 1800.0
-                elev_std = 350.0
-                slope_m = 9.0
-                slope_90 = 20.0
-                roughness = 55.0
-                relief = 1600.0
-                geol = {
-                    "lithology_category": "basaltic_volcanic",
-                    "rock_type": "Continental Crustal Lithology",
-                    "mineralogy_summary": "Silicates, carbonates, quartz, clay minerals.",
-                    "volcanic_character": "Tectonic / volcanic continental block",
-                    "age_era": "Phanerozoic",
-                    "confidence": 0.85
-                }
-                therm = {
-                    "surface_temp_mean_k": 288.0,
-                    "surface_temp_min_k": 265.0,
-                    "surface_temp_max_k": 310.0,
-                    "diurnal_range_k": 45.0,
-                    "thermal_inertia_si": 450.0
-                }
-                surf = {
-                    "albedo": 0.20,
-                    "bare_ground_ratio": 0.85,
-                    "vegetation_ndvi": 0.10,
-                    "roughness_submeter": 0.50,
-                    "dust_sediment_cover": 0.50
-                }
+                # Dynamic On-Demand Geospatial Model based on global geomorphology & coordinates
+                if 23.5 <= lat <= 32.5 and 73.0 <= lon <= 88.5:
+                    # Indo-Gangetic Alluvial Basin (Punjab, Haryana, UP, Bihar, Bengal)
+                    elev_mean = 230.0
+                    elev_min = 190.0
+                    elev_max = 270.0
+                    elev_std = 12.0
+                    slope_m = 0.8
+                    slope_90 = 1.6
+                    roughness = 4.8
+                    relief = 35.0
+                    geol = {
+                        "lithology_category": "sedimentary_alluvial",
+                        "rock_type": "Quaternary Indo-Gangetic Alluvium, Silt, and Sand Plains",
+                        "mineralogy_summary": "Quartz, microcline, illite, chlorite, smectite clays, kankar nodules.",
+                        "volcanic_character": "Craton-derived fluvial depositional basin",
+                        "age_era": "Holocene / Pleistocene",
+                        "confidence": 0.94
+                    }
+                    therm = {
+                        "surface_temp_mean_k": 298.0,
+                        "surface_temp_min_k": 278.0,
+                        "surface_temp_max_k": 318.0,
+                        "diurnal_range_k": 26.0,
+                        "thermal_inertia_si": 580.0
+                    }
+                    surf = {
+                        "albedo": 0.17,
+                        "bare_ground_ratio": 0.30,
+                        "vegetation_ndvi": 0.65,
+                        "roughness_submeter": 0.20,
+                        "dust_sediment_cover": 0.40
+                    }
+                elif 26.5 <= lat <= 38.0 and 74.0 <= lon <= 104.0:
+                    # Himalayas & Tibetan High Plateau
+                    elev_mean = 4900.0
+                    elev_min = 3800.0
+                    elev_max = 6800.0
+                    elev_std = 820.0
+                    slope_m = 24.0
+                    slope_90 = 42.0
+                    roughness = 145.0
+                    relief = 2600.0
+                    geol = {
+                        "lithology_category": "silicified_craton",
+                        "rock_type": "Higher Himalayan Crystalline Leucogranite and Glacial Till",
+                        "mineralogy_summary": "Quartz, tourmaline, muscovite, sillimanite, permafrost ground ice.",
+                        "volcanic_character": "Continent-continent collisional orogen",
+                        "age_era": "Cenozoic Orogeny (~50 Ma)",
+                        "confidence": 0.92
+                    }
+                    therm = {
+                        "surface_temp_mean_k": 262.0,
+                        "surface_temp_min_k": 235.0,
+                        "surface_temp_max_k": 288.0,
+                        "diurnal_range_k": 45.0,
+                        "thermal_inertia_si": 520.0
+                    }
+                    surf = {
+                        "albedo": 0.38,
+                        "bare_ground_ratio": 0.94,
+                        "vegetation_ndvi": 0.04,
+                        "roughness_submeter": 0.75,
+                        "dust_sediment_cover": 0.35
+                    }
+                elif 15.0 <= lat <= 22.5 and 73.0 <= lon <= 77.5:
+                    # Deccan Basalt Traps
+                    elev_mean = 760.0
+                    elev_min = 450.0
+                    elev_max = 1100.0
+                    elev_std = 180.0
+                    slope_m = 8.5
+                    slope_90 = 21.0
+                    roughness = 54.0
+                    relief = 580.0
+                    geol = {
+                        "lithology_category": "basaltic_volcanic",
+                        "rock_type": "Tholeiitic Continental Flood Basalt Flows and Stepped Traps",
+                        "mineralogy_summary": "Plagioclase, augite, olivine, titanomagnetite, secondary zeolites.",
+                        "volcanic_character": "Deccan Large Igneous Province (LIP)",
+                        "age_era": "Cretaceous-Paleogene Boundary (~66 Ma)",
+                        "confidence": 0.95
+                    }
+                    therm = {
+                        "surface_temp_mean_k": 298.0,
+                        "surface_temp_min_k": 285.0,
+                        "surface_temp_max_k": 315.0,
+                        "diurnal_range_k": 32.0,
+                        "thermal_inertia_si": 480.0
+                    }
+                    surf = {
+                        "albedo": 0.15,
+                        "bare_ground_ratio": 0.65,
+                        "vegetation_ndvi": 0.25,
+                        "roughness_submeter": 0.48,
+                        "dust_sediment_cover": 0.30
+                    }
+                elif 14.0 <= lat <= 33.0 and -17.0 <= lon <= 38.0:
+                    # Sahara / Hyper-arid North Africa
+                    elev_mean = 450.0
+                    elev_min = 180.0
+                    elev_max = 950.0
+                    elev_std = 160.0
+                    slope_m = 8.2
+                    slope_90 = 19.0
+                    roughness = 48.0
+                    relief = 420.0
+                    geol = {
+                        "lithology_category": "hyperarid_playa_evaporite",
+                        "rock_type": "Hyper-Arid Quartz Dunefield and Reg Pavement",
+                        "mineralogy_summary": "Hematite-coated quartz sand, gypsum, illite, calcite.",
+                        "volcanic_character": "Cratonic basin with eolian sand sheets",
+                        "age_era": "Quaternary",
+                        "confidence": 0.92
+                    }
+                    therm = {
+                        "surface_temp_mean_k": 305.0,
+                        "surface_temp_min_k": 280.0,
+                        "surface_temp_max_k": 325.0,
+                        "diurnal_range_k": 45.0,
+                        "thermal_inertia_si": 330.0
+                    }
+                    surf = {
+                        "albedo": 0.32,
+                        "bare_ground_ratio": 1.0,
+                        "vegetation_ndvi": 0.00,
+                        "roughness_submeter": 0.28,
+                        "dust_sediment_cover": 0.90
+                    }
+                elif -15.0 <= lat <= 5.0 and -75.0 <= lon <= -48.0:
+                    # Amazon Lowland Basin
+                    elev_mean = 85.0
+                    elev_min = 25.0
+                    elev_max = 140.0
+                    elev_std = 15.0
+                    slope_m = 0.5
+                    slope_90 = 1.2
+                    roughness = 4.2
+                    relief = 30.0
+                    geol = {
+                        "lithology_category": "sedimentary_alluvial",
+                        "rock_type": "Tropical Fluvial Alluvium and Weathered Latosols",
+                        "mineralogy_summary": "Kaolinite, quartz, gibbsite, iron oxyhydroxides.",
+                        "volcanic_character": "Foreland and intracratonic sedimentary basin",
+                        "age_era": "Cenozoic",
+                        "confidence": 0.90
+                    }
+                    therm = {
+                        "surface_temp_mean_k": 299.0,
+                        "surface_temp_min_k": 292.0,
+                        "surface_temp_max_k": 306.0,
+                        "diurnal_range_k": 14.0,
+                        "thermal_inertia_si": 620.0
+                    }
+                    surf = {
+                        "albedo": 0.12,
+                        "bare_ground_ratio": 0.10,
+                        "vegetation_ndvi": 0.88,
+                        "roughness_submeter": 0.15,
+                        "dust_sediment_cover": 0.10
+                    }
+                elif lat < -60.0:
+                    # Antarctic Ice Sheet and Coastal Nunataks
+                    elev_mean = 2100.0
+                    elev_min = 900.0
+                    elev_max = 3400.0
+                    elev_std = 550.0
+                    slope_m = 12.0
+                    slope_90 = 26.0
+                    roughness = 85.0
+                    relief = 1400.0
+                    geol = {
+                        "lithology_category": "polar_permafrost_ice",
+                        "rock_type": "Glacial Polar Ice and Dolerite Nunataks",
+                        "mineralogy_summary": "Glacial ice, pyroxene, plagioclase, cryogenic salts.",
+                        "volcanic_character": "Ferrar Large Igneous Province nunataks and ice sheet",
+                        "age_era": "Quaternary Ice Sheet",
+                        "confidence": 0.96
+                    }
+                    therm = {
+                        "surface_temp_mean_k": 242.0,
+                        "surface_temp_min_k": 210.0,
+                        "surface_temp_max_k": 268.0,
+                        "diurnal_range_k": 40.0,
+                        "thermal_inertia_si": 490.0
+                    }
+                    surf = {
+                        "albedo": 0.65,
+                        "bare_ground_ratio": 0.98,
+                        "vegetation_ndvi": 0.00,
+                        "roughness_submeter": 0.55,
+                        "dust_sediment_cover": 0.30
+                    }
+                else:
+                    # Default Continental Crustal Model
+                    elev_mean = 520.0
+                    elev_min = 180.0
+                    elev_max = 940.0
+                    elev_std = 180.0
+                    slope_m = 5.2
+                    slope_90 = 12.5
+                    roughness = 32.0
+                    relief = 650.0
+                    geol = {
+                        "lithology_category": "silicified_craton",
+                        "rock_type": "Continental Cratonic Shield and Sedimentary Cover",
+                        "mineralogy_summary": "Quartz, feldspar, mica, clay minerals, calcite.",
+                        "volcanic_character": "Tectonic continental basement",
+                        "age_era": "Phanerozoic",
+                        "confidence": 0.88
+                    }
+                    therm = {
+                        "surface_temp_mean_k": 290.0,
+                        "surface_temp_min_k": 272.0,
+                        "surface_temp_max_k": 308.0,
+                        "diurnal_range_k": 32.0,
+                        "thermal_inertia_si": 520.0
+                    }
+                    surf = {
+                        "albedo": 0.20,
+                        "bare_ground_ratio": 0.65,
+                        "vegetation_ndvi": 0.35,
+                        "roughness_submeter": 0.35,
+                        "dust_sediment_cover": 0.35
+                    }
 
         # Generate DEM grid & compute elevation profile slice
         dem = cls.generate_synthetic_elevation_grid(elev_mean, relief, roughness, slope_m)

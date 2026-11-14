@@ -348,6 +348,7 @@ class SimilarityEngine:
                 candidate_id=cand["id"],
                 name=cand["name"],
                 country=cand["country"],
+                continent=cand.get("continent", "Global"),
                 latitude=cand["latitude"],
                 longitude=cand["longitude"],
                 elevation_m=cand["elevation_m"],
@@ -398,29 +399,51 @@ class SimilarityEngine:
                 deduped.append(item)
 
         final_selection = []
-        if diversity_balanced and not use_benchmark_catalog:
-            # Geographic Diversity Balancing: Ensures representation across diverse global continents
-            # while maintaining high scientific similarity thresholds
-            continent_quota = {}
-            for item in deduped:
+        seen_provinces = set()
+        continent_quota = {}
+
+        for item in deduped:
+            cand_name = item["candidate"].name
+            base_prov = cand_name.split(" (")[0].strip() if " (" in cand_name else cand_name.strip()
+
+            # Enforce strict macro-province deduplication (no province appears multiple times in top results)
+            if base_prov in seen_provinces:
+                continue
+
+            if diversity_balanced and not use_benchmark_catalog:
+                # Geographic Diversity Balancing: Ensures representation across diverse global continents
                 cont = item["continent"]
                 current_cnt = continent_quota.get(cont, 0)
-                # Allow maximum 3 candidates per continent in top results to ensure global discovery
-                if current_cnt < 3:
+                # Allow maximum 2 candidates per continent to guarantee wide global distribution
+                if current_cnt < 2:
                     final_selection.append(item["candidate"])
                     continent_quota[cont] = current_cnt + 1
+                    seen_provinces.add(base_prov)
+            else:
+                final_selection.append(item["candidate"])
+                seen_provinces.add(base_prov)
+
+            if len(final_selection) >= top_n:
+                break
+
+        # If quota or strict province deduplication left room, backfill with next best unique candidates
+        if len(final_selection) < top_n:
+            for item in deduped:
+                cand_name = item["candidate"].name
+                base_prov = cand_name.split(" (")[0].strip() if " (" in cand_name else cand_name.strip()
+                if item["candidate"] not in final_selection and base_prov not in seen_provinces:
+                    final_selection.append(item["candidate"])
+                    seen_provinces.add(base_prov)
                 if len(final_selection) >= top_n:
                     break
 
-            # If quota left room, backfill with next best candidates
-            if len(final_selection) < top_n:
-                for item in deduped:
-                    if item["candidate"] not in final_selection:
-                        final_selection.append(item["candidate"])
-                    if len(final_selection) >= top_n:
-                        break
-        else:
-            final_selection = [item["candidate"] for item in deduped[:top_n]]
+        # Final backfill fallback if still below top_n
+        if len(final_selection) < top_n:
+            for item in deduped:
+                if item["candidate"] not in final_selection:
+                    final_selection.append(item["candidate"])
+                if len(final_selection) >= top_n:
+                    break
 
         # Assign final ranks
         for idx, cand in enumerate(final_selection):

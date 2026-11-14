@@ -28,6 +28,7 @@ class AnalogCandidate(BaseModel):
     candidate_id: str
     name: str
     country: str
+    continent: Optional[str] = "Global"
     latitude: float
     longitude: float
     elevation_m: float
