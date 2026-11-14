@@ -1,0 +1,48 @@
+# Dependencies
+node_modules/
+frontend/node_modules/
+__pycache__/
+*/__pycache__/
+*/*/__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+
+# Build artifacts
+dist/
+dist-ssr/
+frontend/dist/
+build/
+*.egg-info/
+
+# Environment and Secrets
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Runtime and Cache
+.pytest_cache/
+.coverage
+htmlcov/
+backend/app/data/cache/*
+backend/app/data/reports/*.pdf
+!backend/app/data/reports/.gitkeep
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS and Editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.sw?
