@@ -59,6 +59,11 @@ export const CesiumEarth: React.FC<CesiumEarthProps> = ({
 
       const viewer = new Cesium.Viewer(containerRef.current, viewerOptions);
 
+      // Start in a full global orbital view of Earth
+      viewer.camera.setView({
+        destination: Cesium.Cartesian3.fromDegrees(0.0, 15.0, 22000000),
+      });
+
       // Dark futuristic atmosphere styling
       viewer.scene.globe.enableLighting = true;
       viewer.scene.backgroundColor = Cesium.Color.fromCssColorString('#07090e');
@@ -196,10 +201,18 @@ export const CesiumEarth: React.FC<CesiumEarthProps> = ({
           radiusKm={radiusKm}
           onSelectCoords={onSelectCoords}
           height={height}
+          showControls={true}
         />
-        <div className="absolute top-4 right-4 z-10 glass-panel px-2.5 py-1 text-[11px] text-amber-300 rounded flex items-center gap-1.5">
-          <Globe size={12} />
-          <span>3D WebGL Earth Mode</span>
+        {/* Mode toggle back to Photorealistic Cesium */}
+        <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
+          <button
+            onClick={() => setUse3DThreeFallback(false)}
+            className="glass-panel text-xs text-sky-300 hover:text-white px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition cursor-pointer border border-sky-500/40 bg-[#070a14]/90 shadow-md"
+            title="Switch to Photorealistic CesiumJS Earth"
+          >
+            <Layers size={13} className="text-sky-400" />
+            <span>Switch to Cesium Earth</span>
+          </button>
         </div>
       </div>
     );
@@ -213,11 +226,11 @@ export const CesiumEarth: React.FC<CesiumEarthProps> = ({
       <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
         <button
           onClick={() => setUse3DThreeFallback(true)}
-          className="glass-panel text-xs text-slate-300 hover:text-white px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition"
-          title="Switch to 3D Globe Mode"
+          className="glass-panel text-xs text-slate-300 hover:text-white px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition cursor-pointer border border-slate-700/60 bg-[#070a14]/80 shadow-md"
+          title="Switch to 3D Three.js Globe Mode"
         >
           <Globe size={13} className="text-sky-400" />
-          <span>Three.js Mode</span>
+          <span>Switch to Three.js Globe</span>
         </button>
       </div>
 

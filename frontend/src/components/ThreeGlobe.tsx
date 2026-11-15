@@ -28,6 +28,9 @@ export const ThreeGlobe: React.FC<ThreeGlobeProps> = ({
 }) => {
   const mountRef = useRef<HTMLDivElement>(null);
   const [autoRotate, setAutoRotate] = useState<boolean>(true);
+  const autoRotateRef = useRef<boolean>(true);
+  const prevCoordsRef = useRef<{ lat: number; lon: number } | null>(null);
+  const ignoreNextCenterRef = useRef<boolean>(false);
   const [hoveredRegion, setHoveredRegion] = useState<string | null>(null);
 
   // References to keep across renders
@@ -79,6 +82,20 @@ export const ThreeGlobe: React.FC<ThreeGlobeProps> = ({
       lat: Math.round(lat * 100) / 100,
       lon: Math.round(lon * 100) / 100,
     };
+  };
+
+  // Re-orient the 3D globe so any given (lat, lon) is positioned front and center facing the camera
+  const orientToCoordinates = (lat: number, lon: number) => {
+    if (!globeMeshRef.current) return;
+    const qY = new THREE.Quaternion().setFromAxisAngle(
+      new THREE.Vector3(0, 1, 0),
+      -THREE.MathUtils.degToRad(lon + 90)
+    );
+    const qX = new THREE.Quaternion().setFromAxisAngle(
+      new THREE.Vector3(1, 0, 0),
+      THREE.MathUtils.degToRad(lat)
+    );
+    globeMeshRef.current.quaternion.copy(qX.multiply(qY));
   };
 
   useEffect(() => {
@@ -135,6 +152,11 @@ export const ThreeGlobe: React.FC<ThreeGlobeProps> = ({
     const globeMesh = new THREE.Mesh(geometry, material);
     scene.add(globeMesh);
     globeMeshRef.current = globeMesh;
+
+    if (selectedCoords) {
+      orientToCoordinates(selectedCoords.lat, selectedCoords.lon);
+      prevCoordsRef.current = { lat: selectedCoords.lat, lon: selectedCoords.lon };
+    }
 
     // Atmosphere glow layer for Mars and Earth
     if (planet === 'mars' || planet === 'earth') {
@@ -193,11 +215,8 @@ export const ThreeGlobe: React.FC<ThreeGlobeProps> = ({
         hasMoved = true;
       }
 
-      globeMeshRef.current.rotation.y += deltaX * controlsState.current.rotationSpeed;
-      globeMeshRef.current.rotation.x += deltaY * controlsState.current.rotationSpeed;
-
-      // Limit pitch to prevent flipping
-      globeMeshRef.current.rotation.x = Math.max(-Math.PI / 2.2, Math.min(Math.PI / 2.2, globeMeshRef.current.rotation.x));
+      globeMeshRef.current.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), deltaX * controlsState.current.rotationSpeed);
+      globeMeshRef.current.rotateOnWorldAxis(new THREE.Vector3(1, 0, 0), deltaY * controlsState.current.rotationSpeed);
 
       controlsState.current.previousMousePosition = { x: e.clientX, y: e.clientY };
     };
@@ -219,6 +238,7 @@ export const ThreeGlobe: React.FC<ThreeGlobeProps> = ({
             // Convert intersection point in globe's local space to lat/lon
             const localPoint = globeMeshRef.current.worldToLocal(intersects[0].point.clone());
             const coords = vector3ToLatLon(localPoint);
+            ignoreNextCenterRef.current = true;
             onSelectCoords(coords.lat, coords.lon);
           }
         }
@@ -244,8 +264,8 @@ export const ThreeGlobe: React.FC<ThreeGlobeProps> = ({
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate);
 
-      if (autoRotate && !isMouseDown && globeMeshRef.current) {
-        globeMeshRef.current.rotation.y += 0.0012;
+      if (autoRotateRef.current && !isMouseDown && globeMeshRef.current) {
+        globeMeshRef.current.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), 0.0012);
       }
 
       renderer.render(scene, camera);
@@ -349,12 +369,35 @@ export const ThreeGlobe: React.FC<ThreeGlobeProps> = ({
       circleMesh.position.copy(pos);
       circleMesh.lookAt(new THREE.Vector3(0, 0, 0));
       group.add(circleMesh);
+
+      // Re-orient rotating globe model so that the selected coordinate is facing directly towards the user
+      const isNewCoord = !prevCoordsRef.current || 
+        prevCoordsRef.current.lat !== selectedCoords.lat || 
+        prevCoordsRef.current.lon !== selectedCoords.lon;
+
+      if (isNewCoord && globeMeshRef.current) {
+        prevCoordsRef.current = { lat: selectedCoords.lat, lon: selectedCoords.lon };
+        if (!ignoreNextCenterRef.current) {
+          orientToCoordinates(selectedCoords.lat, selectedCoords.lon);
+        }
+        ignoreNextCenterRef.current = false;
+      }
     }
   }, [selectedCoords, radiusKm, planet]);
 
+  const handleToggleAutoRotate = () => {
+    const nextState = !autoRotate;
+    setAutoRotate(nextState);
+    autoRotateRef.current = nextState;
+  };
+
   const handleResetCamera = () => {
     if (globeMeshRef.current && cameraRef.current) {
-      globeMeshRef.current.rotation.set(0, 0, 0);
+      if (selectedCoords) {
+        orientToCoordinates(selectedCoords.lat, selectedCoords.lon);
+      } else {
+        globeMeshRef.current.quaternion.identity();
+      }
       controlsState.current.zoom = 2.4;
       cameraRef.current.position.z = 2.4;
     }
@@ -392,8 +435,8 @@ export const ThreeGlobe: React.FC<ThreeGlobeProps> = ({
       {showControls && (
         <div className="absolute bottom-4 right-4 z-10 flex flex-col gap-1.5 glass-panel p-1.5 rounded-lg">
           <button
-            onClick={() => setAutoRotate(!autoRotate)}
-            title={autoRotate ? "Pause Rotation" : "Auto Rotate"}
+            onClick={handleToggleAutoRotate}
+            title={autoRotate ? "Pause Rotation" : "Resume Rotation"}
             className={`p-2 rounded text-xs transition ${autoRotate ? 'bg-sky-500/20 text-sky-300' : 'text-slate-400 hover:text-slate-200'}`}
           >
             <RotateCw size={14} className={autoRotate ? "animate-spin" : ""} />
@@ -429,6 +472,8 @@ export const ThreeGlobe: React.FC<ThreeGlobeProps> = ({
             <button
               key={reg.id}
               onClick={() => {
+                orientToCoordinates(reg.latitude, reg.longitude);
+                prevCoordsRef.current = { lat: reg.latitude, lon: reg.longitude };
                 if (onSelectRegion) onSelectRegion(reg);
                 if (onSelectCoords) onSelectCoords(reg.latitude, reg.longitude);
               }}

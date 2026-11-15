@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Navbar } from './components/Navbar';
 import { ExplorerView } from './views/ExplorerView';
 import { DiscoveryView } from './views/DiscoveryView';
@@ -17,6 +17,7 @@ export function App() {
   const [selectedCoords, setSelectedCoords] = useState<{ lat: number; lon: number }>({ lat: -89.9, lon: 0.0 });
   const [radiusKm, setRadiusKm] = useState<number>(50);
   const [selectedRegion, setSelectedRegion] = useState<ExplorationRegion | null>(null);
+  const pendingPresetRef = useRef<{ planet: 'moon' | 'mars'; lat: number; lon: number; name: string } | null>(null);
 
   // Analysis state
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
@@ -27,19 +28,47 @@ export function App() {
     let isMounted = true;
     fetchPlanetDetails(activePlanet)
       .then((data) => {
-        if (isMounted) {
-          setPlanetDetails(data);
-          // Set sensible default coordinates for each planet
-          if (activePlanet === 'moon') {
-            setSelectedCoords({ lat: -89.9, lon: 0.0 });
-            if (data.featured_regions?.length) setSelectedRegion(data.featured_regions[0]);
-          } else if (activePlanet === 'mars') {
-            setSelectedCoords({ lat: 18.38, lon: 77.58 });
-            if (data.featured_regions?.length) setSelectedRegion(data.featured_regions[0]);
+        if (!isMounted) return;
+        setPlanetDetails(data);
+
+        // If a preset was selected, apply its coordinates and region rather than wiping it
+        if (pendingPresetRef.current && pendingPresetRef.current.planet === activePlanet) {
+          const preset = pendingPresetRef.current;
+          pendingPresetRef.current = null;
+          setSelectedCoords({ lat: preset.lat, lon: preset.lon });
+          const match = data.featured_regions?.find((r) => r.name === preset.name);
+          if (match) {
+            setSelectedRegion(match);
           } else {
-            setSelectedCoords({ lat: -24.08, lon: -69.87 });
-            setSelectedRegion(null);
+            setSelectedRegion({
+              id: preset.name.toLowerCase().replace(/\s+/g, '-'),
+              name: preset.name,
+              planet: preset.planet,
+              latitude: preset.lat,
+              longitude: preset.lon,
+              elevation_m: 0,
+              diameter_km: 100,
+              geological_period: 'Target Region',
+              description: preset.name,
+              mission_significance: preset.name,
+              key_features: ['Target Mission Preset'],
+              scientific_targets: ['Comparative Planetary Analog Analysis'],
+            });
           }
+          return;
+        }
+
+        // Set sensible default coordinates for each planet
+        if (activePlanet === 'moon') {
+          setSelectedCoords({ lat: -89.9, lon: 0.0 });
+          if (data.featured_regions?.length) setSelectedRegion(data.featured_regions[0]);
+        } else if (activePlanet === 'mars') {
+          setSelectedCoords({ lat: 18.38, lon: 77.58 });
+          if (data.featured_regions?.length) setSelectedRegion(data.featured_regions[0]);
+        } else {
+          // Earth: start with no zoomed-in preselection
+          setSelectedCoords({ lat: 0.0, lon: 15.0 });
+          setSelectedRegion(null);
         }
       })
       .catch((err) => console.error('Failed to load planet info:', err));
@@ -78,11 +107,31 @@ export function App() {
   };
 
   const handleSelectPreset = (preset: { planet: 'moon' | 'mars'; lat: number; lon: number; name: string }) => {
-    setActivePlanet(preset.planet);
+    pendingPresetRef.current = preset;
+    if (activePlanet !== preset.planet) {
+      setActivePlanet(preset.planet);
+    }
     setSelectedCoords({ lat: preset.lat, lon: preset.lon });
-    if (planetDetails?.featured_regions) {
+    if (planetDetails?.featured_regions && activePlanet === preset.planet) {
       const match = planetDetails.featured_regions.find((r) => r.name === preset.name);
-      if (match) setSelectedRegion(match);
+      if (match) {
+        setSelectedRegion(match);
+      } else {
+        setSelectedRegion({
+          id: preset.name.toLowerCase().replace(/\s+/g, '-'),
+          name: preset.name,
+          planet: preset.planet,
+          latitude: preset.lat,
+          longitude: preset.lon,
+          elevation_m: 0,
+          diameter_km: 100,
+          geological_period: 'Target Region',
+          description: preset.name,
+          mission_significance: preset.name,
+          key_features: ['Target Mission Preset'],
+          scientific_targets: ['Comparative Planetary Analog Analysis'],
+        });
+      }
     }
   };
 
@@ -162,8 +211,6 @@ export function App() {
           <div className="flex items-center gap-2.5">
             <img src="/logo-squircle.png" alt="TerraTwin" className="w-5 h-5 rounded-md object-contain" />
             <span className="font-bold text-slate-300">TerraTwin</span>
-            <span>•</span>
-            <span>NASA Space Apps Challenge 2026</span>
             <span>•</span>
             <span className="font-mono text-[11px] text-sky-400">PDS / LOLA / MOLA / SRTM / GLiM Ingestion</span>
           </div>

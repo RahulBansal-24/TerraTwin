@@ -45,9 +45,6 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span className="font-extrabold text-white text-base tracking-wider flex items-center">
                 TERRA<span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-cyan-300">TWIN</span>
               </span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-sky-950/80 border border-sky-800 text-sky-300 font-mono font-medium">
-                NASA SPACE APPS
-              </span>
             </div>
             <p className="text-[10px] text-slate-400 tracking-tight">AI-Powered Planetary Analog Discovery</p>
           </div>
