@@ -72,12 +72,12 @@ The system answers the fundamental NASA mission question:
 Experience the full interactive TerraTwin workflow in action — from planetary coordinate targeting on the Moon and Mars to CesiumJS Earth candidate pinpointing, dual-globe 3D synchronization, and automated research report compilation.
 
 <p align="center">
-  <video src="glimpses/video%20captures/demo.mp4" controls="controls" width="100%" style="border-radius: 12px; border: 1px solid #1e293b; box-shadow: 0 10px 30px rgba(0,0,0,0.6);">
+  <video src="https://github.com/RahulBansal-24/TerraTwin/releases/download/v1.0.0/demo.mp4" controls="controls" width="100%" style="border-radius: 12px; border: 1px solid #1e293b; box-shadow: 0 10px 30px rgba(0,0,0,0.6);">
     Your browser does not support the video tag.
   </video>
 </p>
 
-> 🔗 *If the video does not render directly in your browser, you can access the raw capture file here: [Demo Video File](glimpses/video%20captures/demo.mp4).*
+> 🔗 *If the video does not render directly in your browser, you can access or download the full-resolution demo here: [TerraTwin Demo Video (v1.0.0)](https://github.com/RahulBansal-24/TerraTwin/releases/download/v1.0.0/demo.mp4).*
 
 ---
 
