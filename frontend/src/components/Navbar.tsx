@@ -1,5 +1,5 @@
 import React from 'react';
-import { Globe, Compass, GitCompare, Sparkles, BookOpen, Orbit } from 'lucide-react';
+import { Globe, Compass, GitCompare, Sparkles, BookOpen } from 'lucide-react';
 
 interface NavbarProps {
   activeTab: string;
@@ -27,16 +27,25 @@ export const Navbar: React.FC<NavbarProps> = ({
     <header className="sticky top-0 z-50 glass-panel border-b border-sky-900/30 bg-[#070a14]/90 backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         {/* Brand */}
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-sky-600 via-indigo-600 to-amber-500 p-0.5 flex items-center justify-center shadow-[0_0_15px_rgba(56,189,248,0.3)]">
-            <div className="w-full h-full bg-[#07090e] rounded-[10px] flex items-center justify-center">
-              <Orbit className="text-sky-400" size={18} />
-            </div>
+        <div
+          className="flex items-center gap-3 cursor-pointer select-none group"
+          onClick={() => setActiveTab('explorer')}
+          title="TerraTwin — AI-Powered Earth Analog Discovery"
+        >
+          <div className="relative">
+            <div className="absolute -inset-0.5 rounded-xl bg-gradient-to-tr from-orange-500/40 via-sky-500/40 to-cyan-400/50 blur-sm group-hover:opacity-100 opacity-60 transition duration-300"></div>
+            <img
+              src="/logo-squircle.png"
+              alt="TerraTwin Logo"
+              className="relative w-10 h-10 rounded-xl object-contain shadow-[0_0_15px_rgba(56,189,248,0.35)] border border-sky-400/20"
+            />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-extrabold text-white text-base tracking-wider">TERRATWIN</span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-sky-950 border border-sky-800 text-sky-300 font-mono">
+              <span className="font-extrabold text-white text-base tracking-wider flex items-center">
+                TERRA<span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-cyan-300">TWIN</span>
+              </span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-sky-950/80 border border-sky-800 text-sky-300 font-mono font-medium">
                 NASA SPACE APPS
               </span>
             </div>

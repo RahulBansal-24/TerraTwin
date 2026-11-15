@@ -159,8 +159,9 @@ export function App() {
       {/* Scientific Footer */}
       <footer className="border-t border-slate-900 bg-[#04060a] py-6 px-4 text-xs text-slate-500">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3 text-center md:text-left">
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-slate-400">TerraTwin</span>
+          <div className="flex items-center gap-2.5">
+            <img src="/logo-squircle.png" alt="TerraTwin" className="w-5 h-5 rounded-md object-contain" />
+            <span className="font-bold text-slate-300">TerraTwin</span>
             <span>•</span>
             <span>NASA Space Apps Challenge 2026</span>
             <span>•</span>
