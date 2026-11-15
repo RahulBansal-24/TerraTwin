@@ -72,12 +72,18 @@ The system answers the fundamental NASA mission question:
 Experience the full interactive TerraTwin workflow in action — from planetary coordinate targeting on the Moon and Mars to CesiumJS Earth candidate pinpointing, dual-globe 3D synchronization, and automated research report compilation.
 
 <p align="center">
-  <video src="https://github.com/RahulBansal-24/TerraTwin/releases/download/v1.0.0/demo.mp4" controls="controls" width="100%" style="border-radius: 12px; border: 1px solid #1e293b; box-shadow: 0 10px 30px rgba(0,0,0,0.6);">
-    Your browser does not support the video tag.
-  </video>
+  <a href="https://www.youtube.com/watch?v=-MT3KbkDdxw">
+    <img src="https://img.youtube.com/vi/-MT3KbkDdxw/maxresdefault.jpg" alt="TerraTwin Full Demo Walkthrough" width="95%" style="border-radius: 12px; border: 1px solid #1e293b; box-shadow: 0 10px 30px rgba(0,0,0,0.6);" />
+  </a>
 </p>
 
-> 🔗 *If the video does not render directly in your browser, you can access or download the full-resolution demo here: [TerraTwin Demo Video (v1.0.0)](https://github.com/RahulBansal-24/TerraTwin/releases/download/v1.0.0/demo.mp4).*
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=-MT3KbkDdxw">
+    <img src="https://img.shields.io/badge/▶%20WATCH%20FULL%20DEMO%20ON%20YOUTUBE-FF0000?style=for-the-badge&logo=youtube&logoColor=white" alt="Watch on YouTube" />
+  </a>
+</p>
+
+> 🔗 *Click the banner or badge above to watch the complete full-resolution demonstration on YouTube*
 
 ---
 
