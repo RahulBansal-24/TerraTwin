@@ -42,6 +42,8 @@ if os.path.exists(frontend_dist_dir):
     app.mount("/assets", StaticFiles(directory=os.path.join(frontend_dist_dir, "assets")), name="assets")
     if os.path.exists(os.path.join(frontend_dist_dir, "textures")):
         app.mount("/textures", StaticFiles(directory=os.path.join(frontend_dist_dir, "textures")), name="textures")
+    if os.path.exists(os.path.join(frontend_dist_dir, "cesium")):
+        app.mount("/cesium", StaticFiles(directory=os.path.join(frontend_dist_dir, "cesium")), name="cesium")
 
     @app.get("/{full_path:path}")
     def serve_spa(full_path: str):

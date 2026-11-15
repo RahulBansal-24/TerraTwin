@@ -1,0 +1,13 @@
+services:
+  terratwin:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: terratwin-app
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - ENVIRONMENT=production
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+    restart: unless-stopped
