@@ -154,22 +154,24 @@ export const Navbar: React.FC<NavbarProps> = ({
       </div>
 
       {/* Subheader Mission Presets Bar */}
-      <div className="bg-[#05070d] border-t border-slate-900 px-4 py-1.5 flex items-center justify-between text-xs overflow-x-auto">
-        <div className="flex items-center gap-2 text-slate-400 text-[11px] whitespace-nowrap">
-          <span className="font-semibold text-slate-300">Target Missions:</span>
-          {PRESETS.map((p, i) => (
-            <button
-              key={i}
-              onClick={() => {
-                setActivePlanet(p.planet);
-                if (onSelectPreset) onSelectPreset(p);
-                setActiveTab('explorer');
-              }}
-              className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-sky-500/40 transition"
-            >
-              {p.label}
-            </button>
-          ))}
+      <div className="bg-[#05070d] border-t border-slate-900 py-1.5">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between text-xs overflow-x-auto">
+          <div className="flex items-center gap-2 text-slate-400 text-[11px] whitespace-nowrap">
+            <span className="font-semibold text-slate-300">Target Missions:</span>
+            {PRESETS.map((p, i) => (
+              <button
+                key={i}
+                onClick={() => {
+                  setActivePlanet(p.planet);
+                  if (onSelectPreset) onSelectPreset(p);
+                  setActiveTab('explorer');
+                }}
+                className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-sky-500/40 transition"
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </header>
