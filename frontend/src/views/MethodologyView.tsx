@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { fetchDatasets } from '../api';
-import { BookOpen, Database, ShieldAlert, Cpu, ExternalLink, Award, CheckCircle2 } from 'lucide-react';
+import { BookOpen, Database, ShieldAlert, Cpu, ExternalLink, Award, CheckCircle2, AlertCircle } from 'lucide-react';
 
 export const MethodologyView: React.FC = () => {
   const [datasets, setDatasets] = useState<any[]>([]);
@@ -43,9 +43,15 @@ export const MethodologyView: React.FC = () => {
                   <span className="text-[10px] font-mono uppercase text-sky-400 block">{ds.planet} • {ds.type}</span>
                   <h3 className="font-semibold text-white text-xs mt-0.5">{ds.name}</h3>
                 </div>
-                <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-950/60 border border-emerald-500/40 text-emerald-400 flex items-center gap-1 font-mono">
-                  <CheckCircle2 size={10} /> Active
-                </span>
+                {ds.is_active !== false ? (
+                  <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-950/60 border border-emerald-500/40 text-emerald-400 flex items-center gap-1 font-mono">
+                    <CheckCircle2 size={10} /> Active
+                  </span>
+                ) : (
+                  <span className="text-[10px] px-2 py-0.5 rounded bg-amber-950/60 border border-amber-500/40 text-amber-400 flex items-center gap-1 font-mono">
+                    <AlertCircle size={10} /> Unavailable
+                  </span>
+                )}
               </div>
 
               <div className="text-[11px] text-slate-300 grid grid-cols-2 gap-2 pt-1 font-mono">

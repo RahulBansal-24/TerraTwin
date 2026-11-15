@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { AnalysisResult, AnalogCandidate, ScientificInsight } from '../types';
 import { generateInsights, generateReport, getReportDownloadUrl } from '../api';
+import { MarkdownRenderer } from '../components/MarkdownRenderer';
 import { Sparkles, Download, Send, AlertTriangle, ShieldCheck, Truck, Wrench, Microscope, Compass } from 'lucide-react';
 
 interface AssistantViewProps {
@@ -260,7 +261,11 @@ export const AssistantView: React.FC<AssistantViewProps> = ({
                   <p className="text-[10px] text-slate-400 mb-1 font-mono">
                     {msg.sender === 'user' ? 'Scientist' : 'TerraTwin Assistant'}
                   </p>
-                  <div className="whitespace-pre-line text-xs">{msg.text}</div>
+                  {msg.sender === 'user' ? (
+                    <div className="whitespace-pre-line text-xs">{msg.text}</div>
+                  ) : (
+                    <MarkdownRenderer content={msg.text} />
+                  )}
                 </div>
               ))}
 

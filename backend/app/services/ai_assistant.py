@@ -99,10 +99,90 @@ class AIAssistant:
         }
 
     @classmethod
+    def _query_groq_llm(cls, ref_vector: RegionFeatureVector, candidate: AnalogCandidate, question: str) -> Optional[str]:
+        """Query Groq cloud LLM using actual planetary telemetry context."""
+        api_key = os.getenv("GROQ_API_KEY")
+        if not api_key or not api_key.strip():
+            return None
+
+        planet_name = ref_vector.planet.capitalize()
+        planet_data = PLANETARY_SYSTEM.get(ref_vector.planet, PLANETARY_SYSTEM["moon"])
+
+        system_prompt = f"""You are TerraTwin AI, an expert planetary geologist and NASA mission analog researcher.
+You are evaluating a candidate Earth analog site for an extraterrestrial exploration mission.
+
+MISSION & SITE TELEMETRY DATA:
+- Extraterrestrial Target: {ref_vector.name} ({planet_name})
+  * Topography: Mean slope {ref_vector.topography.slope_mean.value:.1f}°, Peak slope {ref_vector.topography.slope_p90.value:.1f}°, Roughness (TRI) {ref_vector.topography.terrain_roughness.value:.1f}, Relief {ref_vector.topography.relief_m.value:.0f}m
+  * Geology: {ref_vector.geology.rock_type} ({ref_vector.geology.lithology_category.replace('_', ' ')})
+  * Mineralogy: {ref_vector.geology.mineralogy_summary}
+  * Thermal: Mean {ref_vector.thermal.surface_temp_mean_k.value:.1f} K, Diurnal Range {ref_vector.thermal.diurnal_range_k.value:.1f} K, Thermal Inertia {ref_vector.thermal.thermal_inertia_si.value:.1f} SI
+  * Environment: Surface gravity {planet_data['physical']['surface_gravity_ms2']} m/s², Pressure {planet_data['physical']['atmospheric_pressure_hpa']} hPa
+
+- Earth Candidate Site: {candidate.name} ({candidate.country})
+  * Coordinates: {candidate.latitude:.2f}°, {candidate.longitude:.2f}°
+  * Topography: Mean slope {candidate.features.topography.slope_mean.value:.1f}°, Peak slope {candidate.features.topography.slope_p90.value:.1f}°, Roughness (TRI) {candidate.features.topography.terrain_roughness.value:.1f}, Relief {candidate.features.topography.relief_m.value:.0f}m
+  * Geology: {candidate.features.geology.rock_type} ({candidate.features.geology.lithology_category.replace('_', ' ')})
+  * Mineralogy: {candidate.features.geology.mineralogy_summary}
+  * Thermal: Mean {candidate.features.thermal.surface_temp_mean_k.value:.1f} K, Diurnal Range {candidate.features.thermal.diurnal_range_k.value:.1f} K, Thermal Inertia {candidate.features.thermal.thermal_inertia_si.value:.1f} SI
+  * Surface: Albedo {candidate.features.surface.albedo.value:.2f}, Bare ground {candidate.features.surface.bare_ground_ratio.value * 100:.0f}%, Vegetation NDVI {candidate.features.surface.vegetation_ndvi.value:.2f}
+
+- Quantitative Similarity Scores:
+  * Overall: {candidate.overall_similarity}%
+  * Topography: {candidate.components.topography_similarity}% | Geology: {candidate.components.geological_similarity}% | Thermal: {candidate.components.thermal_similarity}% | Surface: {candidate.components.surface_similarity}%
+
+- Strongest Matches: {', '.join(candidate.strongest_matches)}
+- Key Differences: {', '.join(candidate.major_differences)}
+
+Respond directly to the scientist's question using the specific numbers and scientific facts above.
+Use clean, well-formatted Markdown:
+- Use bullet points for structured recommendations or caveats.
+- Highlight key metrics with **bold**.
+- Keep the tone professional, authoritative, and scientifically rigorous.
+- If asking about field tests, rover mobility, drilling/sampling, or sensors, explain exact physical advantages and environmental caveats (e.g. Earth's 1g gravity, atmospheric pressure vs vacuum)."""
+
+        try:
+            import requests
+            resp = requests.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {api_key.strip()}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "model": "llama-3.3-70b-versatile",
+                    "messages": [
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": question}
+                    ],
+                    "temperature": 0.3,
+                    "max_tokens": 1024
+                },
+                timeout=12
+            )
+            if resp.status_code == 200:
+                data = resp.json()
+                content = data["choices"][0]["message"]["content"]
+                if content and content.strip():
+                    return content.strip()
+            else:
+                print(f"Groq API returned status {resp.status_code}: {resp.text}")
+        except Exception as e:
+            print(f"Groq API call warning (falling back to local engine): {e}")
+
+        return None
+
+    @classmethod
     def answer_query(cls, ref_vector: RegionFeatureVector, candidate: AnalogCandidate, question: str) -> str:
         """
         Answer targeted user questions regarding test suitability, equipment, or science.
+        Uses live Groq LLM if configured, falling back to deterministic scientific engine.
         """
+        # Try live LLM reasoning via Groq if API key is configured
+        llm_reply = cls._query_groq_llm(ref_vector, candidate, question)
+        if llm_reply:
+            return llm_reply
+
         q = question.lower()
         if "rover" in q or "mobility" in q or "wheel" in q or "traction" in q:
             return (

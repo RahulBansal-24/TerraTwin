@@ -126,14 +126,25 @@ def get_global_candidates(continent: Optional[str] = None, country: Optional[str
 
 @router.get("/datasets")
 def get_datasets():
-    """Return scientific data catalogue with coverage, citations, and status."""
+    """Return scientific data catalogue with validated availability status."""
+    try:
+        db_stats = SpatialDatabase.get_stats()
+        has_earth_db = db_stats.get("status") == "ready" and db_stats.get("total_candidates", 0) > 0
+    except Exception:
+        has_earth_db = False
+
+    has_moon_catalog = len(LUNAR_REGIONS) > 0
+    has_mars_catalog = len(MARS_REGIONS) > 0
+    has_gazetteer = (len(PlanetaryGazetteer.get_features("moon")) + len(PlanetaryGazetteer.get_features("mars"))) > 0
+
     return [
         {
             "name": "NASA LRO LOLA (Lunar Orbiter Laser Altimeter)",
             "planet": "Moon",
             "type": "Topography & Digital Elevation",
             "resolution": "64-128 pixels/degree (~15-30m)",
-            "status": "Operational / Integrated",
+            "status": "Active / Verified" if has_moon_catalog else "Unavailable",
+            "is_active": has_moon_catalog,
             "coverage": "Global Lunar Coverage",
             "citation": "Smith, D. E., et al. (2010), The Lunar Orbiter Laser Altimeter Investigation on the Lunar Reconnaissance Orbiter Mission, Space Sci. Rev., 150(1-4), 209-241."
         },
@@ -142,7 +153,8 @@ def get_datasets():
             "planet": "Moon",
             "type": "Thermal & Rock Abundance",
             "resolution": "1 km grid",
-            "status": "Operational / Integrated",
+            "status": "Active / Verified" if has_moon_catalog else "Unavailable",
+            "is_active": has_moon_catalog,
             "coverage": "Global Lunar Diurnal Swings",
             "citation": "Paige, D. A., et al. (2010), The Lunar Reconnaissance Orbiter Diviner Lunar Radiometer Experiment, Space Sci. Rev., 150, 125-160."
         },
@@ -151,7 +163,8 @@ def get_datasets():
             "planet": "Mars",
             "type": "Topography & Digital Elevation",
             "resolution": "128 pixels/degree (MEGDR)",
-            "status": "Operational / Integrated",
+            "status": "Active / Verified" if has_mars_catalog else "Unavailable",
+            "is_active": has_mars_catalog,
             "coverage": "Global Martian Topography",
             "citation": "Zuber, M. T., et al. (1992), The Mars Observer Laser Altimeter investigation, J. Geophys. Res., 97, 7781-7797."
         },
@@ -160,7 +173,8 @@ def get_datasets():
             "planet": "Mars",
             "type": "Thermal Inertia & Mineralogy",
             "resolution": "100 m / 1 km global products",
-            "status": "Operational / Integrated",
+            "status": "Active / Verified" if has_mars_catalog else "Unavailable",
+            "is_active": has_mars_catalog,
             "coverage": "Global Mars Day/Night IR",
             "citation": "Christensen, P. R., et al. (2004), The Thermal Emission Imaging System (THEMIS) for the Mars 2001 Odyssey Mission, Space Sci. Rev., 110, 85-130."
         },
@@ -169,7 +183,8 @@ def get_datasets():
             "planet": "Moon / Mars",
             "type": "Official Toponymy & Geological Units",
             "resolution": "Feature-level polygon/point bounds",
-            "status": "Operational / Integrated",
+            "status": "Active / Verified" if has_gazetteer else "Unavailable",
+            "is_active": has_gazetteer,
             "coverage": "Global Named Features",
             "citation": "IAU Working Group for Planetary System Nomenclature (WGPSN) / USGS Astrogeology Science Center."
         },
@@ -178,7 +193,8 @@ def get_datasets():
             "planet": "Earth",
             "type": "Global High-Resolution DEM",
             "resolution": "90m global / 30m regional",
-            "status": "Operational / Integrated",
+            "status": "Active / Verified" if has_earth_db else "Unavailable",
+            "is_active": has_earth_db,
             "coverage": "Global Landmass Coverage",
             "citation": "European Space Agency (ESA) & NASA JPL (2021), Copernicus Digital Elevation Model and NASADEM."
         },
@@ -187,7 +203,8 @@ def get_datasets():
             "planet": "Earth",
             "type": "Crustal Rock Units & Lithology",
             "resolution": "Polygonal global coverage",
-            "status": "Operational / Integrated",
+            "status": "Active / Verified" if has_earth_db else "Unavailable",
+            "is_active": has_earth_db,
             "coverage": "Global Terrestrial Crust",
             "citation": "Hartmann, J., & Moosdorf, N. (2012), The new global lithological map database GLiM: A representation of rock properties at the Earth surface, Geochem. Geophys. Geosyst., 13, Q12004."
         },
@@ -196,7 +213,8 @@ def get_datasets():
             "planet": "Earth",
             "type": "Land Cover, Bare Ground & Vegetation",
             "resolution": "10 meter global grid",
-            "status": "Operational / Integrated",
+            "status": "Active / Verified" if has_earth_db else "Unavailable",
+            "is_active": has_earth_db,
             "coverage": "Global Landmasses",
             "citation": "Zanaga, D., et al. (2021), ESA WorldCover 10 m 2020 v100."
         },
@@ -205,7 +223,8 @@ def get_datasets():
             "planet": "Earth",
             "type": "Land Surface Temperature & Emissivity",
             "resolution": "1 km daily grid",
-            "status": "Operational / Integrated",
+            "status": "Active / Verified" if has_earth_db else "Unavailable",
+            "is_active": has_earth_db,
             "coverage": "Global Terrestrial",
             "citation": "Wan, Z. (2014), New refinements and validation of the collection-6 MODIS land-surface temperature/emissivity product, Remote Sens. Environ., 140, 36-45."
         }
