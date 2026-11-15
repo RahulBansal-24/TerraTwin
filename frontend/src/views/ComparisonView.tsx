@@ -93,6 +93,7 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
             selectedCoords={{ lat: ref.latitude, lon: ref.longitude }}
             radiusKm={ref.radius_km}
             height="380px"
+            defaultAutoRotate={false}
           />
         </div>
 
@@ -113,6 +114,8 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
             selectedCoords={{ lat: candidate.latitude, lon: candidate.longitude }}
             radiusKm={ref.radius_km}
             height="380px"
+            defaultAutoRotate={false}
+            zoomToCandidate={false}
           />
         </div>
       </div>

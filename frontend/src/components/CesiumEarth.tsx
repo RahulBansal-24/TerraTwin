@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as Cesium from 'cesium';
 import 'cesium/Build/Cesium/Widgets/widgets.css';
 import { AnalogCandidate } from '../types';
-import { Layers, Globe, MapPin, ZoomIn, ZoomOut, Compass } from 'lucide-react';
+import { Layers, Globe, MapPin, ZoomIn, ZoomOut, Compass, RotateCw } from 'lucide-react';
 import { ThreeGlobe } from './ThreeGlobe';
 
 interface CesiumEarthProps {
@@ -14,6 +14,8 @@ interface CesiumEarthProps {
   radiusKm?: number;
   height?: string;
   className?: string;
+  defaultAutoRotate?: boolean;
+  zoomToCandidate?: boolean;
 }
 
 export const CesiumEarth: React.FC<CesiumEarthProps> = ({
@@ -25,11 +27,16 @@ export const CesiumEarth: React.FC<CesiumEarthProps> = ({
   radiusKm = 50,
   height = '600px',
   className = '',
+  defaultAutoRotate = true,
+  zoomToCandidate = true,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<Cesium.Viewer | null>(null);
   const [use3DThreeFallback, setUse3DThreeFallback] = useState<boolean>(false);
   const [cesiumError, setCesiumError] = useState<string | null>(null);
+  const [autoRotate, setAutoRotate] = useState<boolean>(defaultAutoRotate);
+  const autoRotateRef = useRef<boolean>(defaultAutoRotate);
+  const isInteractingRef = useRef<boolean>(false);
 
   // Initialize Cesium viewer
   useEffect(() => {
@@ -70,8 +77,46 @@ export const CesiumEarth: React.FC<CesiumEarthProps> = ({
       viewer.scene.fog.enabled = true;
       viewer.scene.fog.density = 0.0002;
 
-      // Handle coordinate picking on Earth surface
+      // Auto-rotation clock tick listener
+      const onTick = () => {
+        if (!autoRotateRef.current || !viewerRef.current || isInteractingRef.current) return;
+        viewerRef.current.camera.rotateRight(0.0006);
+      };
+      viewer.clock.onTick.addEventListener(onTick);
+
+      // Handle coordinate picking on Earth surface and user interaction state
       const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+
+      handler.setInputAction(() => {
+        isInteractingRef.current = true;
+      }, Cesium.ScreenSpaceEventType.LEFT_DOWN);
+
+      handler.setInputAction(() => {
+        isInteractingRef.current = false;
+      }, Cesium.ScreenSpaceEventType.LEFT_UP);
+
+      handler.setInputAction(() => {
+        isInteractingRef.current = true;
+      }, Cesium.ScreenSpaceEventType.MIDDLE_DOWN);
+
+      handler.setInputAction(() => {
+        isInteractingRef.current = false;
+      }, Cesium.ScreenSpaceEventType.MIDDLE_UP);
+
+      handler.setInputAction(() => {
+        isInteractingRef.current = true;
+      }, Cesium.ScreenSpaceEventType.RIGHT_DOWN);
+
+      handler.setInputAction(() => {
+        isInteractingRef.current = false;
+      }, Cesium.ScreenSpaceEventType.RIGHT_UP);
+
+      const canvas = viewer.scene.canvas;
+      const onCanvasMouseLeave = () => {
+        isInteractingRef.current = false;
+      };
+      canvas.addEventListener('mouseleave', onCanvasMouseLeave);
+
       handler.setInputAction((movement: any) => {
         const pickedObject = viewer.scene.pick(movement.position);
         if (Cesium.defined(pickedObject) && pickedObject.id && pickedObject.id.candidateData) {
@@ -96,6 +141,8 @@ export const CesiumEarth: React.FC<CesiumEarthProps> = ({
 
       return () => {
         handler.destroy();
+        canvas.removeEventListener('mouseleave', onCanvasMouseLeave);
+        viewer.clock.onTick.removeEventListener(onTick);
         if (!viewer.isDestroyed()) {
           viewer.destroy();
         }
@@ -163,11 +210,17 @@ export const CesiumEarth: React.FC<CesiumEarthProps> = ({
           },
         });
 
-        // Fly camera to selected candidate
-        viewer.camera.flyTo({
-          destination: Cesium.Cartesian3.fromDegrees(cand.longitude, cand.latitude, radiusKm * 3500),
-          duration: 1.5,
-        });
+        // Position camera on selected candidate
+        if (zoomToCandidate) {
+          viewer.camera.flyTo({
+            destination: Cesium.Cartesian3.fromDegrees(cand.longitude, cand.latitude, radiusKm * 3500),
+            duration: 1.5,
+          });
+        } else {
+          viewer.camera.setView({
+            destination: Cesium.Cartesian3.fromDegrees(cand.longitude, cand.latitude, 22000000),
+          });
+        }
       }
     });
 
@@ -190,7 +243,42 @@ export const CesiumEarth: React.FC<CesiumEarthProps> = ({
         },
       });
     }
-  }, [candidates, selectedCandidateId, selectedCoords, radiusKm, use3DThreeFallback]);
+  }, [candidates, selectedCandidateId, selectedCoords, radiusKm, use3DThreeFallback, zoomToCandidate]);
+
+  const handleToggleAutoRotate = () => {
+    const nextState = !autoRotate;
+    setAutoRotate(nextState);
+    autoRotateRef.current = nextState;
+  };
+
+  const handleResetCamera = () => {
+    if (!viewerRef.current) return;
+    const viewer = viewerRef.current;
+    if (selectedCoords) {
+      viewer.camera.flyTo({
+        destination: Cesium.Cartesian3.fromDegrees(selectedCoords.lon, selectedCoords.lat, 22000000),
+        duration: 1.2,
+      });
+    } else {
+      viewer.camera.flyTo({
+        destination: Cesium.Cartesian3.fromDegrees(0.0, 15.0, 22000000),
+        duration: 1.2,
+      });
+    }
+  };
+
+  const handleZoom = (direction: 'in' | 'out') => {
+    if (!viewerRef.current) return;
+    const viewer = viewerRef.current;
+    const camera = viewer.camera;
+    const height = camera.positionCartographic.height;
+    const delta = Math.max(50000, height * 0.35);
+    if (direction === 'in') {
+      camera.zoomIn(delta);
+    } else {
+      camera.zoomOut(delta);
+    }
+  };
 
   if (use3DThreeFallback) {
     return (
@@ -202,6 +290,7 @@ export const CesiumEarth: React.FC<CesiumEarthProps> = ({
           onSelectCoords={onSelectCoords}
           height={height}
           showControls={true}
+          defaultAutoRotate={defaultAutoRotate}
         />
         {/* Mode toggle back to Photorealistic Cesium */}
         <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
@@ -242,6 +331,40 @@ export const CesiumEarth: React.FC<CesiumEarthProps> = ({
           <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-sky-400" /> 75-84% Moderate</span>
           <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-400" /> &lt;75% Partial</span>
         </div>
+      </div>
+
+      {/* Floating 3D Controls */}
+      <div className="absolute bottom-4 right-4 z-10 flex flex-col gap-1.5 glass-panel p-1.5 rounded-lg border border-slate-700/60 bg-[#070a14]/90 shadow-lg">
+        <button
+          onClick={handleToggleAutoRotate}
+          title={autoRotate ? "Pause Rotation" : "Resume Rotation"}
+          className={`p-2 rounded text-xs transition cursor-pointer ${
+            autoRotate ? 'bg-sky-500/20 text-sky-300' : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <RotateCw size={14} className={autoRotate ? "animate-spin" : ""} />
+        </button>
+        <button
+          onClick={handleResetCamera}
+          title="Reset Perspective"
+          className="p-2 rounded text-xs text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition cursor-pointer"
+        >
+          <Compass size={14} />
+        </button>
+        <button
+          onClick={() => handleZoom('in')}
+          title="Zoom In"
+          className="p-2 rounded text-xs text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition cursor-pointer"
+        >
+          <ZoomIn size={14} />
+        </button>
+        <button
+          onClick={() => handleZoom('out')}
+          title="Zoom Out"
+          className="p-2 rounded text-xs text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition cursor-pointer"
+        >
+          <ZoomOut size={14} />
+        </button>
       </div>
     </div>
   );

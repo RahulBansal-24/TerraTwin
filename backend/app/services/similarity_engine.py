@@ -5,6 +5,7 @@ with spatial deduplication, geographic diversity balancing, and robust Z-score n
 """
 
 import math
+import random
 import numpy as np
 from typing import List, Dict, Tuple, Any, Optional
 
@@ -179,6 +180,37 @@ class SimilarityEngine:
         return surf_score, strong_matches, divergences
 
     @classmethod
+    def _generate_morphometric_profile(cls, elev_mean: float, relief: float, roughness: float,
+                                       slope_mean: float, lat: float, lon: float, n_points: int = 25) -> List[float]:
+        """
+        Synthesize a deterministic, realistic 1D topographic cross-section
+        derived from the candidate's actual location coordinates and morphometric properties.
+        """
+        seed_val = int(abs(lat * 1000) + abs(lon * 1000) + abs(elev_mean) * 10 + slope_mean * 100 + roughness * 10) % 2147483647
+        rng = random.Random(seed_val)
+
+        phase1 = rng.uniform(0.0, math.pi * 2)
+        phase2 = rng.uniform(0.0, math.pi * 2)
+        freq1 = rng.choice([0.8, 1.2, 1.6, 2.0, 2.4])
+        freq2 = rng.choice([2.8, 3.5, 4.2, 5.0])
+
+        macro_tilt = math.tan(math.radians(min(45.0, max(0.5, slope_mean)))) * (relief * 0.45)
+        roughness_amp = min(relief * 0.4, max(5.0, roughness * 2.5))
+
+        profile = []
+        for idx in range(n_points):
+            t = (idx / (n_points - 1)) * 2.0 - 1.0  # -1.0 to 1.0
+            h_macro = t * macro_tilt
+            h_major = math.sin(t * math.pi * freq1 + phase1) * (relief * 0.4)
+            h_minor = math.cos(t * math.pi * freq2 + phase2) * (roughness_amp * 0.35)
+            h_noise = rng.uniform(-1.0, 1.0) * (roughness * 0.08)
+
+            val = elev_mean + h_macro + h_major + h_minor + h_noise
+            profile.append(round(val, 1))
+
+        return profile
+
+    @classmethod
     def build_candidate_vector_from_db_row(cls, row: Dict[str, Any]) -> RegionFeatureVector:
         """Convert SQLite database row into RegionFeatureVector."""
         return RegionFeatureVector(
@@ -221,7 +253,15 @@ class SimilarityEngine:
                 roughness_submeter=FeatureMeasurement(value=row["roughness_submeter"], unit="m", data_source="Topographic Derivative", resolution="Sub-meter", confidence=row["data_coverage_score"]),
                 dust_sediment_cover=FeatureMeasurement(value=row["dust_sediment_cover"], unit="ratio", data_source="SoilGrids / MODIS", resolution="250m", confidence=row["data_coverage_score"])
             ),
-            elevation_profile=[round(row["elevation_mean"] + math.sin(i*0.5)*(row["relief_m"]*0.4), 1) for i in range(25)],
+            elevation_profile=cls._generate_morphometric_profile(
+                elev_mean=row["elevation_mean"],
+                relief=row["relief_m"],
+                roughness=row["terrain_roughness"],
+                slope_mean=row["slope_mean"],
+                lat=row["latitude"],
+                lon=row["longitude"],
+                n_points=25
+            ),
             slope_histogram={
                 "0-5°": round(max(5.0, 50.0 - row["slope_mean"] * 2.5), 1),
                 "5-15°": round(max(10.0, 30.0 + row["slope_mean"] * 0.5), 1),

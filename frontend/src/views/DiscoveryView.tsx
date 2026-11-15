@@ -219,6 +219,8 @@ export const DiscoveryView: React.FC<DiscoveryViewProps> = ({
             selectedCandidateId={activeCand?.candidate_id}
             onSelectCandidate={(cand) => setSelectedCandidate(cand)}
             height="520px"
+            defaultAutoRotate={false}
+            zoomToCandidate={true}
           />
 
           {/* Active Candidate Detailed Strip */}

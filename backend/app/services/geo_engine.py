@@ -54,7 +54,8 @@ class GeoEngine:
 
     @classmethod
     def generate_synthetic_elevation_grid(cls, center_elev: float, relief: float, roughness: float,
-                                         slope_mean: float, grid_size: int = 33) -> np.ndarray:
+                                         slope_mean: float, grid_size: int = 33,
+                                         lat: float = 0.0, lon: float = 0.0) -> np.ndarray:
         """
         Generate a scientifically structured digital elevation grid (DEM)
         representing the regional topography for morphological and gradient analysis.
@@ -71,7 +72,8 @@ class GeoEngine:
         macro_trend = (X * np.cos(theta) + Y * np.sin(theta)) * gradient_val
 
         # Multiscale fractal roughness (representing cratering/fracturing)
-        np.random.seed(int(abs(center_elev) + slope_mean * 100) % 65536)
+        seed_val = int(abs(lat * 1000) + abs(lon * 1000) + abs(center_elev) + slope_mean * 100) % 65536
+        np.random.seed(seed_val)
         noise1 = np.sin(2.5 * np.pi * X) * np.cos(2.5 * np.pi * Y) * (roughness * 0.4)
         noise2 = np.sin(6.0 * np.pi * X + 0.3) * np.cos(6.0 * np.pi * Y + 0.5) * (roughness * 0.2)
         noise3 = np.random.normal(0, roughness * 0.1, (grid_size, grid_size))
@@ -452,7 +454,7 @@ class GeoEngine:
                     }
 
         # Generate DEM grid & compute elevation profile slice
-        dem = cls.generate_synthetic_elevation_grid(elev_mean, relief, roughness, slope_m)
+        dem = cls.generate_synthetic_elevation_grid(elev_mean, relief, roughness, slope_m, lat=lat, lon=lon)
         center_idx = dem.shape[0] // 2
         elevation_profile = [round(float(v), 1) for v in dem[center_idx, :]]
 

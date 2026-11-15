@@ -13,6 +13,7 @@ interface ThreeGlobeProps {
   height?: string;
   className?: string;
   showControls?: boolean;
+  defaultAutoRotate?: boolean;
 }
 
 export const ThreeGlobe: React.FC<ThreeGlobeProps> = ({
@@ -25,10 +26,11 @@ export const ThreeGlobe: React.FC<ThreeGlobeProps> = ({
   height = '600px',
   className = '',
   showControls = true,
+  defaultAutoRotate = true,
 }) => {
   const mountRef = useRef<HTMLDivElement>(null);
-  const [autoRotate, setAutoRotate] = useState<boolean>(true);
-  const autoRotateRef = useRef<boolean>(true);
+  const [autoRotate, setAutoRotate] = useState<boolean>(defaultAutoRotate);
+  const autoRotateRef = useRef<boolean>(defaultAutoRotate);
   const prevCoordsRef = useRef<{ lat: number; lon: number } | null>(null);
   const ignoreNextCenterRef = useRef<boolean>(false);
   const [hoveredRegion, setHoveredRegion] = useState<string | null>(null);
