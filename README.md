@@ -1,4 +1,4 @@
-# 🪐 TERRATWIN
+# 🌗 TERRATWIN
 ### 🚀 AI-Powered Earth Analog Discovery Platform for Lunar and Martian Exploration
 #### *Planetary Analog Discovery Engine*
 
@@ -487,85 +487,124 @@ TerraTwin synthesizes open-access planetary and terrestrial datasets from premie
 
 ```
 terratwin/
-├── .env.example                 # Template for environment variables (GROQ_API_KEY)
-├── .gitignore                   # Git exclusion rules (ignores .env, caches, builds)
-├── package.json                 # Top-level workspace script shortcuts
-├── README.md                    # Comprehensive scientific and architectural documentation
-├── requirements.txt             # Python backend dependencies
+├── .dockerignore                 # Container build ignore rules
+├── .env.example                  # Template for environment variables (GROQ_API_KEY)
+├── .gitignore                    # Git exclusion rules (ignores secrets, local DBs, node_modules)
+├── docker-compose.yml            # Multi-service container orchestration configuration
+├── Dockerfile                    # Containerization instructions for production deployment
+├── package.json                  # Root npm workspace configuration and build scripts
+├── pitch deck.pdf                # Executive project presentation and mission pitch (PDF)
+├── pitch deck.pptx               # Editable presentation slides (PowerPoint)
+├── README.md                     # Comprehensive scientific and architectural documentation
+├── render.yaml                   # Cloud deployment blueprint configuration
+├── requirements.txt              # Python backend dependencies
 │
-├── backend/                     # Python 3.13 FastAPI backend
+├── backend/                      # Python 3.13 FastAPI backend application
 │   ├── app/
-│   │   ├── main.py              # Application entrypoint, CORS & static SPA mounting
+│   │   ├── main.py               # FastAPI entrypoint, CORS configuration & static SPA mounting
 │   │   ├── data/
-│   │   │   ├── dataset_catalog.py      # Planetary dataset metadata and citations
-│   │   │   ├── terratwin_spatial.db    # SQLite spatial candidate database
-│   │   │   └── reports/                # Output directory for generated PDF reports
+│   │   │   ├── audit_report.py         # System auditing and dataset verification utility
+│   │   │   ├── dataset_catalog.py      # Planetary dataset metadata, resolutions & citations
+│   │   │   └── reports/                # Sample generated publication-grade PDF reports
+│   │   │       ├── report_7bda3449_earth_atacama.pdf
+│   │   │       └── report_8279c2e2_earth_atacama.pdf
 │   │   ├── models/
-│   │   │   ├── features.py             # Feature vectors & extraction schemas
-│   │   │   ├── planet.py               # Planetary info & exploration regions
-│   │   │   └── similarity.py           # Similarity breakdown & analysis result models
+│   │   │   ├── features.py             # Feature vector models & query extraction schemas
+│   │   │   ├── planet.py               # Planetary telemetry, regions & gazetteer schemas
+│   │   │   └── similarity.py           # Similarity breakdown & candidate ranking models
 │   │   ├── routes/
-│   │   │   └── api.py                  # REST API route handlers
+│   │   │   └── api.py                  # Core REST API endpoint handlers
 │   │   └── services/
-│   │       ├── ai_assistant.py         # Groq LLM client & deterministic fallback
-│   │       ├── geo_engine.py           # Topographic slope & TRI extraction
-│   │       ├── planetary_gazetteer.py  # IAU official planetary nomenclature
-│   │       ├── report_generator.py     # Publication-grade PDF builder (ReportLab)
-│   │       ├── seed_data_generator.py  # Candidate spatial grid generation
-│   │       ├── similarity_engine.py    # Multi-dimensional Z-score similarity
-│   │       └── spatial_db.py           # Relational spatial candidate database
+│   │       ├── ai_assistant.py         # Groq LLM client (Llama-3.3-70B) & deterministic fallback
+│   │       ├── geo_engine.py           # Riley's TRI morphometry & slope gradient extraction
+│   │       ├── planetary_gazetteer.py  # Official IAU planetary nomenclature indexing
+│   │       ├── report_generator.py     # Academic PDF report builder (ReportLab & Pillow)
+│   │       ├── seed_data_generator.py  # Global candidate spatial grid generator
+│   │       ├── similarity_engine.py    # Multi-dimensional Z-score similarity & affinity engine
+│   │       └── spatial_db.py           # High-speed SQLite spatial candidate database
 │   └── tests/
-│       ├── test_api_endpoints.py       # API route integration tests
-│       ├── test_engines.py             # Math, TRI, and similarity engine tests
-│       └── test_spatial_db.py          # Spatial SQLite database tests
+│       ├── probe_server.py             # Live server diagnostic probe utility
+│       ├── test_api_endpoints.py       # Integration tests for all REST API endpoints
+│       ├── test_engines.py             # Unit tests for similarity, TRI & petrological matrices
+│       └── test_spatial_db.py          # Spatial database candidate querying & filter tests
 │
-├── frontend/                    # React 19 + TypeScript frontend
-│   ├── index.html               # Web application HTML shell
-│   ├── vite.config.ts           # Vite bundler configuration & Cesium plugin
-│   ├── package.json             # Frontend npm dependencies
-│   ├── public/                  # Public static assets & Cesium worker bundles
-│   │   ├── logo-squircle.png    # TerraTwin squircle brand icon
-│   │   └── textures/            # Spherical texture maps for Three.js
-│   │       ├── earth_map.jpg    # High-resolution Earth texture
-│   │       ├── earth_clouds.jpg # Semi-transparent Earth cloud layer
-│   │       ├── moon_map.jpg     # NASA LROC/LOLA lunar surface map
-│   │       └── mars_map.jpg     # NASA Viking/MOLA martian surface map
+├── frontend/                     # React 19 + TypeScript + Vite frontend application
+│   ├── .gitignore                # Frontend-specific build exclusion rules
+│   ├── .oxlintrc.json            # Code linting configuration
+│   ├── index.html                # Web application single-page HTML shell
+│   ├── package.json              # Frontend npm dependencies and build scripts
+│   ├── package-lock.json         # Exact dependency lockfile
+│   ├── README.md                 # Frontend component documentation
+│   ├── tsconfig.app.json         # TypeScript application configuration
+│   ├── tsconfig.json             # Root TypeScript configuration
+│   ├── tsconfig.node.json        # Node-specific TypeScript configuration
+│   ├── vite.config.ts            # Vite bundler configuration & Cesium plugin
+│   ├── public/                   # Static assets & Cesium worker distribution files
+│   │   ├── apple-touch-icon.png  # Apple touch device icon
+│   │   ├── favicon-16x16.png     # Small browser favicon
+│   │   ├── favicon-32x32.png     # Medium browser favicon
+│   │   ├── favicon-48x48.png     # Large browser favicon
+│   │   ├── favicon.ico           # Legacy favicon
+│   │   ├── favicon.svg           # Scalable vector favicon
+│   │   ├── icon-192.png          # PWA 192x192 application icon
+│   │   ├── icon-512.png          # PWA 512x512 application icon
+│   │   ├── icons.svg             # SVG icon sprite sheet
+│   │   ├── logo-horizontal.svg   # Wide vector brand logo
+│   │   ├── logo-squircle.png     # TerraTwin brand squircle icon
+│   │   ├── logo.png              # Full-resolution PNG logo
+│   │   ├── manifest.json         # Web application manifest
+│   │   ├── maskable-icon-512.png # Adaptive maskable icon
+│   │   ├── og-image.png          # Open Graph social preview banner
+│   │   ├── site.webmanifest      # Progressive Web App manifest
+│   │   └── textures/             # Spherical texture maps for Three.js
+│   │       ├── earth_clouds.jpg  # Semi-transparent atmospheric cloud layer
+│   │       ├── earth_map.jpg     # High-resolution Earth color map
+│   │       ├── mars_map.jpg      # NASA Viking/MOLA Mars global color map
+│   │       └── moon_map.jpg      # NASA LROC/LOLA Lunar global surface map
 │   └── src/
-│       ├── main.tsx             # React DOM entrypoint
-│       ├── App.tsx              # Root component & view router
-│       ├── api.ts               # Frontend API client
-│       ├── types.ts             # TypeScript definitions
-│       ├── components/
-│       │   ├── CesiumEarth.tsx          # Photorealistic CesiumJS Earth visualizer
-│       │   ├── ThreeGlobe.tsx           # Three.js 3D sphere for Moon & Mars
-│       │   ├── CandidateCard.tsx        # Analog candidate scorecard card
-│       │   ├── RadarChart.tsx           # 5-Axis SVG Congruence Radar chart
-│       │   ├── ElevationProfileChart.tsx# Dynamic relative cross-section profile
-│       │   ├── MarkdownRenderer.tsx     # Custom zero-dependency Markdown parser
-│       │   └── Navbar.tsx               # Header with responsive preset alignment
-│       └── views/
-│           ├── ExplorerView.tsx         # Planetary exploration & coordinate picking
-│           ├── DiscoveryView.tsx        # Ranked candidate distribution & Cesium pins
-│           ├── ComparisonView.tsx       # Dual-globe 3D visualizer & metric matrix
-│           ├── AssistantView.tsx        # AI mission advisor & instant PDF export
-│           └── MethodologyView.tsx      # Dataset catalogue & algorithmic math
+│       ├── App.css               # Global application styles
+│       ├── App.tsx               # Root component, telemetry state & view router
+│       ├── api.ts                # Axios/Fetch REST API client for backend
+│       ├── index.css             # Tailwind CSS directives & custom utility classes
+│       ├── main.tsx              # React 19 DOM bootstrap entrypoint
+│       ├── types.ts              # TypeScript interfaces for planets, candidates & metrics
+│       ├── assets/               # Bundled UI media assets
+│       │   ├── favicon.svg       # Vector icon asset
+│       │   ├── hero.png          # Interstellar hero graphic
+│       │   ├── logo-horizontal.svg# Horizontal logo asset
+│       │   ├── logo-squircle.png # Squircle brand asset
+│       │   ├── logo.png          # Standard logo asset
+│       │   ├── react.svg         # React framework badge
+│       │   └── vite.svg          # Vite build tool badge
+│       ├── components/           # Reusable scientific visual components
+│       │   ├── CandidateCard.tsx         # Analog site scorecard with match badges & tags
+│       │   ├── CesiumEarth.tsx           # Photorealistic CesiumJS 3D Earth globe
+│       │   ├── ElevationProfileChart.tsx # Dynamic relative cross-section elevation profile
+│       │   ├── MarkdownRenderer.tsx      # Zero-dependency Markdown parser for Groq AI responses
+│       │   ├── Navbar.tsx                # Responsive top navigation & mission presets bar
+│       │   ├── RadarChart.tsx            # 5-Axis SVG Congruence Radar chart
+│       │   └── ThreeGlobe.tsx            # Three.js 3D textured sphere for Moon & Mars
+│       └── views/                # Full-page scientific workflow views
+│           ├── AssistantView.tsx         # AI mission advisor chat & instant PDF report export
+│           ├── ComparisonView.tsx        # Synchronized dual-globe 3D visualizer & metric matrix
+│           ├── DiscoveryView.tsx         # Ranked candidate explorer & Cesium candidate pins
+│           ├── ExplorerView.tsx          # Planetary raycasting, coordinate picker & IAU gazetteer
+│           └── MethodologyView.tsx       # Scientific dataset catalogue & algorithmic math documentation
 │
-└── glimpses/                    # Visual media & project demonstration assets
-    ├── screenshots/             # 9 module screenshots in chronological order
-    │   ├── 1) planet explorer - moon.png
-    │   ├── 2) planet explorer - mars.png
-    │   ├── 3) planet explorer - earth.png
-    │   ├── 4) analog discovery.png
-    │   ├── 5) 3D comparison.png
-    │   ├── 6) stats comparison.png
-    │   ├── 7) AI analysis and interactive research queries.png
-    │   ├── 8) data sources.png
-    │   └── 9) algorithm and science.png
-    ├── report/                  # Sample publication-grade PDF research reports
-    │   ├── 1) Report first page.jpg
-    │   └── 2) Report second page.jpg
-    └── video captures/          # Full project walkthrough video demo
-        └── demo.mp4
+└── glimpses/                     # High-resolution visual media & demonstration assets
+    ├── report/                   # Sample publication-grade PDF report pages
+    │   ├── 1) Report first page.jpg      # Front cover, metadata & congruence radar chart
+    │   └── 2) Report second page.jpg     # Quantitative parameter matrix & suitability analysis
+    └── screenshots/              # Complete walkthrough screenshots in chronological order
+        ├── 1) planet explorer - moon.png
+        ├── 2) planet explorer - mars.png
+        ├── 3) planet explorer - earth.png
+        ├── 4) analog discovery.png
+        ├── 5) 3D comparison.png
+        ├── 6) stats comparison.png
+        ├── 7) AI analysis and interactive research queries.png
+        ├── 8) data sources.png
+        └── 9) algorithm and science.png
 ```
 
 ---
